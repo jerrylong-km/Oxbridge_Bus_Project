@@ -1,0 +1,25 @@
+# 智慧校车 SaaS 平台 —— Python 依赖清单
+# 安装：pip install -r requirements.txt
+
+# --- 后端 Web 框架 ---
+fastapi              # Web 后端框架 (main.py)
+uvicorn[standard]    # ASGI 服务器，用于启动后端服务
+
+# --- 数据库 ORM ---
+sqlalchemy           # ORM，操作 SQLite 数据库 (models.py)
+# 注：SQLite 为 Python 标准库自带，无需单独安装
+
+# --- 数据校验与安全 ---
+pydantic[email]      # 数据校验，EmailStr 需要 email-validator 扩展 (schemas.py)
+passlib[bcrypt]      # 密码哈希加密 (main.py / auth_utils.py)
+bcrypt==4.0.1        # 必须钉此版本：5.x 删除了 passlib 1.7.4 依赖的 __about__ 属性，会报错
+python-jose[cryptography]  # JWT 登录令牌签发/校验 (auth_utils.py)
+python-dotenv        # 从 .env 文件加载环境变量，读取 SECRET_KEY (auth_utils.py)
+python-multipart     # FastAPI 处理表单 POST（登录接口需要）
+
+# --- 路线计算与数据处理 ---
+scikit-learn         # KMeans 学生聚类 (calculate_routes.py 等)
+numpy==2.4.5         # 数值计算
+pandas==3.0.3        # 数据处理
+requests==2.34.2     # 调用外部地图/路线 API
+openpyxl             # 解析上传的 .xlsx 学生数据文件 (main.py)

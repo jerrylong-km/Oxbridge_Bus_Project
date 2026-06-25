@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oxbridge Academy 校车智能调度系统</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            display: flex;
+            height: 100vh;
+            background-color: #1a1a2e;
+            color: #e2e8f0;
+            overflow: hidden;
+        }
+
+        #dashboard {
+            width: 30%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(22, 22, 37, 0.95) 0%, rgba(15, 15, 26, 0.98) 100%);
+            padding: 24px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            box-shadow: 4px 0 25px rgba(0,0,0,0.5);
+            z-index: 10;
+            overflow-y: auto;
+            border-right: 1px solid rgba(255,255,255,0.05);
+        }
+
+        h1 {
+            font-size: 20px;
+            font-weight: 700;
+            background: linear-gradient(to right, #6366f1, #a855f7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .section-title {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #94a3b8;
+            margin-bottom: 6px;
+        }
+        /* 阶段指示器 */
+        .phase-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            padding: 10px 14px;
+            border-radius: 10px;
+            background: rgba(99, 102, 241, 0.15);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            color: #a5b4fc;
+        }
+
+        .phase-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #6366f1;
+            flex-shrink: 0;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        #confirm-btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #6366f1, #a855f7);
+            color: white;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            letter-spacing: 0.5px;
+            transition: all 0.2s ease;
+        }
+
+        #confirm-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4);
+        }
+
+        #confirm-btn:disabled {
+            background: rgba(99, 102, 241, 0.3);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .route-card {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            padding: 14px;
+            border-left: 5px solid #ccc;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .route-name { font-weight: 600; font-size: 15px; }
+
+        .status-badge {
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 20px;
+            background: rgba(16, 185, 129, 0.2);
+            color: #34d399;
+        }
+
+        .status-badge.pending {
+            background: rgba(251, 191, 36, 0.2);
+            color: #fbbf24;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .stat-box {
+            background: rgba(0,0,0,0.2);
+            padding: 8px 10px;
+            border-radius: 8px;
+        }
+
+        .stat-label { font-size: 11px; color: #64748b; margin-bottom: 3px; }
+        .stat-value { font-size: 14px; font-weight: 700; }
+
+        .stop-list {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .stop-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            padding: 7px 9px;
+            transition: background 0.2s;
+        }
+
+        .stop-item.modified {
+            background: rgba(251, 191, 36, 0.1);
+            border: 1px solid rgba(251, 191, 36, 0.3);
+        }
+
+        .stop-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            margin-top: 3px;
+        }
+
+        .stop-info { flex: 1; }
+
+        .stop-address {
+            font-size: 11px;
+            color: #94a3b8;
+            line-height: 1.4;
+            word-break: break-word;
+        }
+
+        .stop-count {
+            font-size: 12px;
+            font-weight: 600;
+            color: #e2e8f0;
+            margin-top: 2px;
+        }
+
+        .modified-tag {
+            font-size: 10px;
+            color: #fbbf24;
+            margin-top: 2px;
+        }
+
+        /* 逐段明细 (用时/距离对比) */
+        .segments {
+            margin-top: 10px;
+            border-top: 1px dashed rgba(255,255,255,0.1);
+            padding-top: 8px;
+        }
+
+        .seg-title {
+            font-size: 11px;
+            color: #64748b;
+            margin-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .seg-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+            color: #cbd5e1;
+            padding: 3px 0;
+            line-height: 1.4;
+        }
+
+        .seg-path { flex: 1; word-break: break-word; }
+
+        .seg-metric {
+            flex-shrink: 0;
+            color: #94a3b8;
+            font-variant-numeric: tabular-nums;
+            margin-left: 8px;
+        }
+
+        .seg-start {
+            color: #34d399;
+            font-weight: 600;
+        }
+
+        #map { width: 70%; height: 100%; }
+    </style>
+</head>
+<body>
+
+<div id="dashboard">
+    <h1>Oxbridge Bus Scheduler</h1>
+
+    <div style="display:flex; gap:8px;">
+        <span style="flex:1; text-align:center; padding:7px 0; border-radius:8px; font-size:12px; font-weight:600; background:linear-gradient(135deg,#6366f1,#a855f7); color:#fff; cursor:default;">
+            优化方案
+        </span>
+        <a href="actual_routes.html" style="flex:1; text-align:center; padding:7px 0; border-radius:8px; font-size:12px; font-weight:600; border:1px solid rgba(255,255,255,0.15); color:#94a3b8; text-decoration:none; transition:all 0.2s;"
+           onmouseover="this.style.borderColor='rgba(255,255,255,0.35)';this.style.color='#e2e8f0';"
+           onmouseout="this.style.borderColor='rgba(255,255,255,0.15)';this.style.color='#94a3b8';">
+            实际路线对比
+        </a>
+    </div>
+
+    <div>
+        <div class="section-title">当前阶段</div>
+        <div class="phase-indicator" id="phase-indicator">
+            <div class="phase-dot"></div>
+            <span id="phase-text">阶段一：检查并调整站点位置</span>
+        </div>
+    </div>
+
+    <button id="confirm-btn" onclick="confirmAndDrawRoutes()">
+        确认站点位置，绘制最优路线
+    </button>
+
+    <button id="reset-btn" onclick="resetStops()" style="width:100%; padding:10px; border:1px solid rgba(239,68,68,0.4); border-radius:12px; background:rgba(239,68,68,0.08); color:#fca5a5; font-size:13px; font-weight:600; cursor:pointer; transition:all 0.2s;"
+        onmouseover="this.style.background='rgba(239,68,68,0.18)';this.style.borderColor='rgba(239,68,68,0.7)';"
+        onmouseout="this.style.background='rgba(239,68,68,0.08)';this.style.borderColor='rgba(239,68,68,0.4)';">
+        重置站点位置（恢复算法原始结果）
+    </button>
+
+    <div class="section-title">区域路线状态</div>
+    <div id="zone-cards"></div>
+</div>
+
+<div id="map"></div>
+
+<!-- 本地密钥配置 (config.js 已被 .gitignore 屏蔽)，必须在主脚本之前加载 -->
+<script src="/frontend/config.js"></script>
+
+<script>
+    // ══════════════════════════════════════════════════════════════
+    //  配置
+    // ══════════════════════════════════════════════════════════════
+    // API Key 从本地 config.js 读取 (该文件已被 .gitignore 屏蔽，不进 git)。
+    // 没加载到 config.js 时回退为空字符串，地图不会加载并给出提示。
+    const API_KEY = window.GOOGLE_MAPS_API_KEY || "";
+
+    const SCHOOL = { name: "Oxbridge Academy", lat: 26.7153, lng: -80.1147 };
+    const ZONE_COLORS = { Zone_1: "#10b981", Zone_2: "#3b82f6", Zone_3: "#f59e0b" };
+    const ZONE_LABELS = { Zone_1: "校车 1", Zone_2: "校车 2", Zone_3: "校车 3" };
+    const ZONE_EMOJI  = { Zone_1: "🟢", Zone_2: "🔵", Zone_3: "🟡" };
+
+    const COLOR_PALETTE = [
+        "#34d399","#60a5fa","#fbbf24","#f87171","#c084fc",
+        "#fb923c","#f472b6","#38bdf8","#a3e635","#e879f9"
+    ];
+
+    const STORAGE_KEY = "oxbridge_stop_overrides";
+
+    // 从 localStorage 读取用户保存的站点覆盖坐标
+    function loadOverrides() {
+        try {
+            return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+        } catch (e) {
+            return {};
+        }
+    }
+
+    // 把当前所有 modified 的坐标写入 localStorage
+    function saveOverrides() {
+        const overrides = {};
+        Object.entries(stopData).forEach(([sid, d]) => {
+            if (d.modified) overrides[sid] = { lat: d.lat, lng: d.lng };
+        });
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(overrides));
+    }
+
+    // 清空 localStorage 里的覆盖数据
+    function clearOverrides() {
+        localStorage.removeItem(STORAGE_KEY);
+    }
+
+    let map, geocoder, directionsService;
+    const stopMarkers = {};   // stopId -> google.maps.Marker
+    const stopData = {};      // stopId -> { lat, lng, zone, color, count, modified }
+    const routePolylines = [];
+
+    // ══════════════════════════════════════════════════════════════
+    //  初始化地图
+    // ══════════════════════════════════════════════════════════════
+    function initMap() {
+        directionsService = new google.maps.DirectionsService();
+        geocoder = new google.maps.Geocoder();
+
+        map = new google.maps.Map(document.getElementById("map"), {
+            center: { lat: 26.72, lng: -80.12 },
+            zoom: 11,
+            styles: [
+                { elementType: "geometry", stylers: [{ color: "#242f3e" }] },
+                { elementType: "labels.text.fill", stylers: [{ color: "#746855" }] },
+                { elementType: "labels.text.stroke", stylers: [{ color: "#242f3e" }] },
+                { featureType: "administrative.locality", elementType: "labels.text.fill", stylers: [{ color: "#d59563" }] },
+                { featureType: "road", elementType: "geometry", stylers: [{ color: "#38414e" }] },
+                { featureType: "road", elementType: "geometry.stroke", stylers: [{ color: "#212a37" }] },
+                { featureType: "road", elementType: "labels.text.fill", stylers: [{ color: "#9ca5b3" }] },
+                { featureType: "water", elementType: "geometry", stylers: [{ color: "#17263c" }] }
+            ]
+        });
+
+        loadStudentsAndStops();
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    //  阶段一：读取数据，绘制散点和可拖拽站点
+    // ══════════════════════════════════════════════════════════════
+    async function loadStudentsAndStops() {
+        const [studentsResp, stopsResp] = await Promise.all([
+            fetch('/data/clustered_students.json'),
+            fetch('/data/all_bus_stops.json')
+        ]);
+        const students = await studentsResp.json();
+        const stops    = await stopsResp.json();
+
+        // 1. 为每个 stop_id 分配颜色
+        const stopColorMap = {};
+        let ci = 0;
+        stops.forEach(s => {
+            stopColorMap[s.stop_id] = COLOR_PALETTE[ci++ % COLOR_PALETTE.length];
+        });
+
+        // 2. 统计每个站点人数
+        const stopCount = {};
+        students.forEach(s => {
+            stopCount[s.route_id] = (stopCount[s.route_id] || 0) + 1;
+        });
+
+        // 3. 绘制学生散点
+        students.forEach(s => {
+            new google.maps.Marker({
+                position: { lat: s.lat, lng: s.lng },
+                map,
+                title: `${s.student_id} → ${s.route_id}`,
+                icon: {
+                    path: google.maps.SymbolPath.CIRCLE,
+                    scale: 5,
+                    fillColor: stopColorMap[s.route_id] || "#fff",
+                    fillOpacity: 0.85,
+                    strokeColor: "#ffffff",
+                    strokeWeight: 1
+                },
+                zIndex: 1
+            });
+        });
+
+        // 4. 绘制学校标记
+        new google.maps.Marker({
+            position: { lat: SCHOOL.lat, lng: SCHOOL.lng },
+            map,
+            title: "Oxbridge Academy",
+            label: { text: "HQ", color: "#fff", fontWeight: "bold" },
+            icon: {
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 12,
+                fillColor: "#7c3aed",
+                fillOpacity: 1,
+                strokeColor: "#ffffff",
+                strokeWeight: 2
+            },
+            zIndex: 10
+        });
+        // 5. 初始化 stopData，绘制可拖拽站点标记
+        const overrides = loadOverrides();
+        stops.forEach(stop => {
+            const sid = stop.stop_id;
+            const zone = stop.zone;
+            if (!zone) return;
+
+            const stopNo = (sid.match(/_Stop_(\d+)$/) || [])[1] || "?";
+            const color = stopColorMap[sid] || ZONE_COLORS[zone];
+            const count = stopCount[sid] || stop.student_count || 0;
+
+            // 如果 localStorage 里有保存的坐标，优先使用
+            const saved = overrides[sid];
+            const lat = saved ? saved.lat : stop.lat;
+            const lng = saved ? saved.lng : stop.lng;
+            const modified = !!saved;
+
+            stopData[sid] = { lat, lng, zone, color, count, modified };
+
+            const marker = new google.maps.Marker({
+                position: { lat, lng },
+                map,
+                title: `${sid} (可拖拽调整)`,
+                draggable: true,
+                label: { text: stopNo, color: "#fff", fontWeight: "bold", fontSize: "13px" },
+                icon: {
+                    path: google.maps.SymbolPath.CIRCLE,
+                    scale: 14,
+                    fillColor: ZONE_COLORS[zone] || "#ccc",
+                    fillOpacity: 1,
+                    strokeColor: "#ffffff",
+                    strokeWeight: 3
+                },
+                zIndex: 20
+            });
+
+            marker.addListener("dragend", () => {
+                const pos = marker.getPosition();
+                stopData[sid].lat = pos.lat();
+                stopData[sid].lng = pos.lng();
+                stopData[sid].modified = true;
+                saveOverrides();
+                updateStopAddress(sid, pos.lat(), pos.lng());
+
+                // 站点有变动：清除已绘路线，重置确认按钮，等待用户再次确认
+                routePolylines.forEach(p => p.setMap(null));
+                routePolylines.length = 0;
+                const btn = document.getElementById("confirm-btn");
+                btn.disabled = false;
+                btn.textContent = "确认站点位置，绘制最优路线";
+                document.querySelectorAll(".status-badge").forEach(b => {
+                    b.textContent = "待确认";
+                    b.classList.add("pending");
+                });
+                const phaseEl = document.getElementById("phase-text");
+                if (phaseEl) phaseEl.textContent = "阶段一：检查并调整站点位置";
+            });
+
+            stopMarkers[sid] = marker;
+        });
+
+        // 6. 动态生成仪表盘卡片
+        buildDashboardCards(stops, stopCount, stopColorMap);
+
+        // 7. 加载后端算好的用时/距离明细 (route_metrics.json)
+        loadRouteMetrics();
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    //  加载后端用时/距离明细，填入仪表盘 (供与运营手册对比)
+    // ══════════════════════════════════════════════════════════════
+    async function loadRouteMetrics() {
+        let metrics;
+        try {
+            const resp = await fetch('/data/route_metrics.json');
+            if (!resp.ok) throw new Error(resp.status);
+            metrics = await resp.json();
+        } catch (e) {
+            console.warn('route_metrics.json 未找到，先运行 calculate_routes.py。', e);
+            return;
+        }
+
+        Object.keys(metrics).forEach(zone => {
+            const m = metrics[zone];
+
+            const timeEl = document.getElementById(`time-${zone}`);
+            if (timeEl) timeEl.textContent = `${m.total_minutes} 分钟`;
+
+            const distEl = document.getElementById(`dist-${zone}`);
+            if (distEl) distEl.textContent = `${m.total_km} km`;
+
+            const startEl = document.getElementById(`start-${zone}`);
+            if (startEl) startEl.textContent = m.start_stop || "--";
+
+            // 逐段明细
+            const segEl = document.getElementById(`seg-${zone}`);
+            if (segEl && m.segments && m.segments.length) {
+                let rows = `<div class="seg-title"><span>逐段明细 (发车 → 到校)</span><span>时间 / 距离</span></div>`;
+                m.segments.forEach((s, i) => {
+                    const fromCls = i === 0 ? 'seg-start' : '';
+                    const arrow = (i === m.segments.length - 1) ? '🏫' : '→';
+                    rows += `
+                        <div class="seg-item">
+                            <span class="seg-path"><span class="${fromCls}">${s.from}</span> ${arrow} ${s.to}</span>
+                            <span class="seg-metric">${s.minutes} 分 / ${s.km} km</span>
+                        </div>`;
+                });
+                segEl.innerHTML = rows;
+                segEl.style.display = "block";
+            }
+        });
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    //  仪表盘：动态生成区域卡片
+    // ══════════════════════════════════════════════════════════════
+    function buildDashboardCards(stops, stopCount, stopColorMap) {
+        const container = document.getElementById("zone-cards");
+        const zones = [...new Set(stops.map(s => s.zone))].sort();
+
+        zones.forEach(zone => {
+            const zoneStops = stops.filter(s => s.zone === zone)
+                .sort((a, b) => {
+                    const na = parseInt((a.stop_id.match(/_Stop_(\d+)$/) || [])[1] || "0");
+                    const nb = parseInt((b.stop_id.match(/_Stop_(\d+)$/) || [])[1] || "0");
+                    return na - nb;
+                });  // 按运行顺序排 (1=最远发车站)
+            const totalStudents = zoneStops.reduce((sum, s) => sum + (stopCount[s.stop_id] || s.student_count || 0), 0);
+            const zColor = ZONE_COLORS[zone] || "#ccc";
+            const label = ZONE_LABELS[zone] || zone;
+            const emoji = ZONE_EMOJI[zone] || "🚌";
+
+            const card = document.createElement("div");
+            card.className = "route-card";
+            card.style.borderLeftColor = zColor;
+            card.innerHTML = `
+                <div class="card-header">
+                    <span class="route-name" style="color:${zColor};">${emoji} ${label} (${zone})</span>
+                    <span class="status-badge pending" id="badge-${zone}">待确认</span>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-box"><div class="stat-label">路网预估时间</div><div class="stat-value" id="time-${zone}">--</div></div>
+                    <div class="stat-box"><div class="stat-label">总里程</div><div class="stat-value" id="dist-${zone}">--</div></div>
+                    <div class="stat-box"><div class="stat-label">站点 / 学生</div><div class="stat-value">${zoneStops.length} 站 / ${totalStudents} 人</div></div>
+                    <div class="stat-box"><div class="stat-label">发车站</div><div class="stat-value" id="start-${zone}" style="font-size:12px;">--</div></div>
+                </div>
+                <div class="stop-list" id="stops-${zone}"></div>
+                <div class="segments" id="seg-${zone}" style="display:none;"></div>`;
+            container.appendChild(card);
+
+            // 填充站点明细
+            const listEl = document.getElementById(`stops-${zone}`);
+            zoneStops.forEach(stop => {
+                const sid = stop.stop_id;
+                const c = stopColorMap[sid] || zColor;
+                const cnt = stopCount[sid] || stop.student_count || 0;
+                const item = document.createElement("div");
+                item.className = "stop-item";
+                item.id = `item-${sid}`;
+                item.innerHTML = `
+                    <div class="stop-dot" style="background:${c};"></div>
+                    <div class="stop-info">
+                        <div class="stop-address" id="addr-${sid}">查询地址中...</div>
+                        <div class="stop-count">${cnt} 名学生</div>
+                        <div class="modified-tag" id="tag-${sid}"></div>
+                    </div>`;
+                listEl.appendChild(item);
+
+                // 反查地址（使用 stopData 里的实际坐标，可能已是用户调整后的值）
+                const actualLat = stopData[sid] ? stopData[sid].lat : stop.lat;
+                const actualLng = stopData[sid] ? stopData[sid].lng : stop.lng;
+                const isModified = stopData[sid] && stopData[sid].modified;
+                if (isModified) {
+                    item.classList.add("modified");
+                    const tagEl = document.getElementById(`tag-${sid}`);
+                    if (tagEl) tagEl.textContent = "⚠️ 已手动调整";
+                }
+                geocoder.geocode({ location: { lat: actualLat, lng: actualLng } }, (results, status) => {
+                    const el = document.getElementById(`addr-${sid}`);
+                    if (el) el.textContent = (status === "OK" && results[0])
+                        ? results[0].formatted_address
+                        : `${actualLat.toFixed(5)}, ${actualLng.toFixed(5)}`;
+                });
+            });
+        });
+    }
+
+    function updateStopAddress(sid, lat, lng) {
+        const item = document.getElementById(`item-${sid}`);
+        if (item) item.classList.add("modified");
+        const tag = document.getElementById(`tag-${sid}`);
+        if (tag) tag.textContent = "⚠️ 已手动调整";
+        const addrEl = document.getElementById(`addr-${sid}`);
+        if (addrEl) addrEl.textContent = "查询中...";
+
+        geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+            if (addrEl) addrEl.textContent = (status === "OK" && results[0])
+                ? results[0].formatted_address
+                : `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+        });
+    }
+    // ══════════════════════════════════════════════════════════════
+    //  重置站点：清除 localStorage，恢复算法原始坐标
+    // ══════════════════════════════════════════════════════════════
+    function resetStops() {
+        if (!confirm("确认重置所有站点到算法原始位置？手动调整记录将被清除。")) return;
+        clearOverrides();
+        location.reload();
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    //  阶段二：确认站点，绘制最优路线
+    // ══════════════════════════════════════════════════════════════
+    async function confirmAndDrawRoutes() {
+        const btn = document.getElementById("confirm-btn");
+        btn.disabled = true;
+        btn.textContent = "正在绘制路线...";
+
+        // 确认时把当前坐标状态持久化到 localStorage
+        saveOverrides();
+
+        const phaseEl = document.getElementById("phase-text");
+        phaseEl.textContent = "阶段二：正在绘制最优行车路线...";
+        document.getElementById("phase-indicator").style.background = "rgba(16,185,129,0.15)";
+        document.getElementById("phase-indicator").style.borderColor = "rgba(16,185,129,0.3)";
+        document.getElementById("phase-indicator").style.color = "#34d399";
+        document.querySelector(".phase-dot").style.background = "#10b981";
+
+        // 直接从 stopData 按 zone 分组，用当前坐标（含手动调整后的值）构建路线点
+        // 按 stop_id 末尾编号升序排列（编号1=最远发车站，最后到学校）
+        const regionPoints = {};
+        Object.entries(stopData).forEach(([sid, d]) => {
+            if (!regionPoints[d.zone]) regionPoints[d.zone] = [];
+            regionPoints[d.zone].push({ sid, lat: d.lat, lng: d.lng });
+        });
+
+        const zones = Object.keys(regionPoints).sort();
+        let completed = 0;
+
+        zones.forEach(zone => {
+            // 按编号排序，学校作为终点加在最后
+            const stops = regionPoints[zone].sort((a, b) => {
+                const na = parseInt((a.sid.match(/_Stop_(\d+)$/) || [])[1] || "0");
+                const nb = parseInt((b.sid.match(/_Stop_(\d+)$/) || [])[1] || "0");
+                return na - nb;
+            });
+            const points = [
+                ...stops.map(s => ({ lat: s.lat, lng: s.lng })),
+                { lat: SCHOOL.lat, lng: SCHOOL.lng }
+            ];
+            const anyModified = stops.some(s => stopData[s.sid] && stopData[s.sid].modified);
+
+            drawRoutePolyline(zone, points, anyModified, () => {
+                completed++;
+                if (completed === zones.length) {
+                    btn.textContent = "✅ 路线已确认";
+                    phaseEl.textContent = "阶段二：最优路线规划完成";
+                }
+            });
+        });
+    }
+
+    function morningRushDeparture() {
+        const dep = new Date();
+        dep.setHours(7, 30, 0, 0);
+        if (dep <= new Date()) dep.setDate(dep.getDate() + 1);
+        return dep;
+    }
+
+    function drawRoutePolyline(zone, points, recompute, onDone) {
+        const color = ZONE_COLORS[zone] || "#fff";
+
+        // 尝试用 Google Directions 画真实道路折线
+        if (points.length >= 2 && directionsService) {
+            const origin = new google.maps.LatLng(points[0].lat, points[0].lng);
+            const destination = new google.maps.LatLng(points[points.length - 1].lat, points[points.length - 1].lng);
+            const waypoints = points.slice(1, -1).map(p => ({
+                location: new google.maps.LatLng(p.lat, p.lng),
+                stopover: true
+            }));
+
+            directionsService.route({
+                origin,
+                destination,
+                waypoints,
+                optimizeWaypoints: false,
+                travelMode: google.maps.TravelMode.DRIVING,
+                drivingOptions: {
+                    departureTime: morningRushDeparture(),
+                    trafficModel: google.maps.TrafficModel.BEST_GUESS
+                }
+            }, (result, status) => {
+                if (status === google.maps.DirectionsStatus.OK) {
+                    const polyline = new google.maps.Polyline({
+                        path: result.routes[0].overview_path,
+                        strokeColor: color,
+                        strokeOpacity: 0.85,
+                        strokeWeight: 5,
+                        map
+                    });
+                    routePolylines.push(polyline);
+
+                    // 仅当站点被拖拽过 (后端 metrics 失效) 才用 Directions 重算覆盖，
+                    // 否则保留后端 route_metrics.json 的带路况对比数字。
+                    if (recompute) {
+                        let totalSecs = 0, totalMeters = 0;
+                        result.routes[0].legs.forEach(leg => {
+                            totalSecs += leg.duration.value;
+                            totalMeters += leg.distance.value;
+                        });
+                        const timeEl = document.getElementById(`time-${zone}`);
+                        if (timeEl) timeEl.textContent = (totalSecs / 60).toFixed(1) + " 分钟*";
+                        const distEl = document.getElementById(`dist-${zone}`);
+                        if (distEl) distEl.textContent = (totalMeters / 1000).toFixed(2) + " km*";
+                    }
+                } else {
+                    // Directions 失败，降级为直线
+                    console.warn(`Directions API 失败 (${zone}): ${status}，降级为直线`);
+                    drawFallbackPolyline(zone, points, color);
+                }
+
+                // 更新状态徽章
+                const badge = document.getElementById(`badge-${zone}`);
+                if (badge) { badge.textContent = "已优化"; badge.classList.remove("pending"); }
+                onDone();
+            });
+        } else {
+            drawFallbackPolyline(zone, points, color);
+            onDone();
+        }
+    }
+
+    function drawFallbackPolyline(zone, points, color) {
+        // 直线连接各站点 (Directions API 不可用时的降级方案)
+        const path = points.map(p => ({ lat: p.lat, lng: p.lng }));
+        const polyline = new google.maps.Polyline({
+            path,
+            strokeColor: color,
+            strokeOpacity: 0.7,
+            strokeWeight: 4,
+            strokePattern: [{ icon: { path: 'M 0,-1 0,1', strokeOpacity: 1, scale: 3 }, offset: '0', repeat: '15px' }],
+            map
+        });
+        routePolylines.push(polyline);
+
+        const badge = document.getElementById(`badge-${zone}`);
+        if (badge) { badge.textContent = "已优化(直线)"; badge.classList.remove("pending"); }
+    }
+</script>
+
+<script>
+    // 动态加载 Google Maps (key 来自 config.js → window.GOOGLE_MAPS_API_KEY)
+    (function() {
+        if (!API_KEY || API_KEY.indexOf("在这里") !== -1) {
+            document.getElementById("map").innerHTML =
+                '<div style="color:#fca5a5;padding:40px;font-size:15px;line-height:1.8;">' +
+                '⚠️ 未检测到有效的 Google Maps API Key。<br>' +
+                '请打开项目根目录的 <b>config.js</b>，把你的前端 key 填进去后刷新页面。' +
+                '</div>';
+            console.error("config.js 未提供有效的 GOOGLE_MAPS_API_KEY");
+            return;
+        }
+        const s = document.createElement('script');
+        s.src = `https://maps.googleapis.com/maps/api/js?key=${API_KEY}&callback=initMap`;
+        s.async = true;
+        s.defer = true;
+        document.body.appendChild(s);
+    })();
+</script>
+</body>
+</html>

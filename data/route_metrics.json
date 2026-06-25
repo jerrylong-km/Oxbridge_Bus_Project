@@ -1,0 +1,92 @@
+{
+    "Zone_1": {
+        "start_stop": "Zone_1_Stop_1",
+        "total_minutes": 39.1,
+        "total_km": 31.84,
+        "num_stops": 3,
+        "segments": [
+            {
+                "from": "Zone_1_Stop_1",
+                "to": "Zone_1_Stop_2",
+                "minutes": 17.0,
+                "km": 12.74
+            },
+            {
+                "from": "Zone_1_Stop_2",
+                "to": "Zone_1_Stop_3",
+                "minutes": 11.9,
+                "km": 11.07
+            },
+            {
+                "from": "Zone_1_Stop_3",
+                "to": "Oxbridge Academy",
+                "minutes": 10.2,
+                "km": 8.03
+            }
+        ]
+    },
+    "Zone_2": {
+        "start_stop": "Zone_2_Stop_1",
+        "total_minutes": 68.0,
+        "total_km": 45.37,
+        "num_stops": 4,
+        "segments": [
+            {
+                "from": "Zone_2_Stop_1",
+                "to": "Zone_2_Stop_2",
+                "minutes": 18.5,
+                "km": 12.93
+            },
+            {
+                "from": "Zone_2_Stop_2",
+                "to": "Zone_2_Stop_3",
+                "minutes": 16.1,
+                "km": 9.8
+            },
+            {
+                "from": "Zone_2_Stop_3",
+                "to": "Zone_2_Stop_4",
+                "minutes": 15.8,
+                "km": 8.9
+            },
+            {
+                "from": "Zone_2_Stop_4",
+                "to": "Oxbridge Academy",
+                "minutes": 17.5,
+                "km": 13.73
+            }
+        ]
+    },
+    "Zone_3": {
+        "start_stop": "Zone_3_Stop_1",
+        "total_minutes": 46.4,
+        "total_km": 38.71,
+        "num_stops": 4,
+        "segments": [
+            {
+                "from": "Zone_3_Stop_1",
+                "to": "Zone_3_Stop_2",
+                "minutes": 12.1,
+                "km": 10.15
+            },
+            {
+                "from": "Zone_3_Stop_2",
+                "to": "Zone_3_Stop_3",
+                "minutes": 7.7,
+                "km": 7.14
+            },
+            {
+                "from": "Zone_3_Stop_3",
+                "to": "Zone_3_Stop_4",
+                "minutes": 15.2,
+                "km": 15.32
+            },
+            {
+                "from": "Zone_3_Stop_4",
+                "to": "Oxbridge Academy",
+                "minutes": 11.4,
+                "km": 6.1
+            }
+        ]
+    }
+}

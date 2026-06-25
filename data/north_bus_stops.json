@@ -1,0 +1,20 @@
+[
+    {
+        "stop_id": "North_Stop_1",
+        "zone": "Zone North",
+        "lat": 26.823879,
+        "lng": -80.109789
+    },
+    {
+        "stop_id": "North_Stop_2",
+        "zone": "Zone North",
+        "lat": 26.884389,
+        "lng": -80.103419
+    },
+    {
+        "stop_id": "North_Stop_3",
+        "zone": "Zone North",
+        "lat": 26.935121,
+        "lng": -80.125565
+    }
+]

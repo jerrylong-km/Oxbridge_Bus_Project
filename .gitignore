@@ -1,0 +1,23 @@
+# --- 敏感信息：绝不入库 ---
+.env
+*.key
+*.pem
+frontend/config.js
+
+# --- 数据库文件（含用户数据，不应入库） ---
+*.db
+*.sqlite
+*.sqlite3
+
+# --- Python 缓存与环境 ---
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+env/
+
+# --- 操作系统 / 编辑器 ---
+.DS_Store
+.vscode/
+.idea/
+.claude/

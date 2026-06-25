@@ -1,0 +1,2244 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <script src="auth_guard.js?v=2"></script>
+    <script>
+        // 内联鉴权：立即执行，不依赖外部文件缓存
+        (function() {
+            var token = localStorage.getItem('access_token');
+            var role = localStorage.getItem('user_role');
+            if (!token || role !== 'SchoolAdmin') {
+                localStorage.removeItem('access_token');
+                localStorage.removeItem('user_role');
+                localStorage.removeItem('username');
+                localStorage.removeItem('school_id');
+                window.location.replace('/login.html');
+            }
+        })();
+    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oxbridge Academy - 校车线路管理</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0;
+             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+
+        body { display: flex; height: 100vh; background-color: #1a1a2e; color: #e2e8f0; overflow: hidden; }
+
+        /* ===== 左侧 Dashboard ===== */
+        #dashboard {
+            width: 34%; min-width: 380px; height: 100%;
+            background: linear-gradient(135deg, rgba(22,22,37,0.97) 0%, rgba(15,15,26,0.99) 100%);
+            display: flex; flex-direction: column;
+            box-shadow: 4px 0 25px rgba(0,0,0,0.5); z-index: 10;
+            border-right: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .dash-header {
+            padding: 20px 22px; border-bottom: 1px solid rgba(255,255,255,0.08);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .dash-header h1 {
+            font-size: 18px; font-weight: 700;
+            background: linear-gradient(to right, #6366f1, #a855f7);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .dash-header .school-name { font-size: 12px; color: #94a3b8; margin-top: 4px; }
+        .btn-logout {
+            padding: 6px 12px; border-radius: 6px; border: 1px solid #f87171;
+            background: transparent; color: #f87171; cursor: pointer; font-size: 12px;
+        }
+        .btn-logout:hover { background: rgba(248,113,113,0.1); }
+
+        /* ===== 模式切换 tab ===== */
+        .mode-tabs { display: flex; padding: 0 22px; gap: 6px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+        .mode-tab {
+            padding: 14px 10px; font-size: 14px; color: #94a3b8; cursor: pointer;
+            border-bottom: 2px solid transparent; transition: all 0.2s; user-select: none;
+        }
+        .mode-tab:hover { color: #c7d2fe; }
+        .mode-tab.active { color: #a5b4fc; border-bottom-color: #6366f1; font-weight: 600; }
+
+        .panel { flex: 1; overflow-y: auto; padding: 20px 22px; }
+
+        .btn-primary {
+            width: 100%; padding: 12px; border: none; border-radius: 10px;
+            background: linear-gradient(135deg, #6366f1, #a855f7);
+            color: white; font-size: 14px; font-weight: 700; cursor: pointer;
+            transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(99,102,241,0.4); }
+
+        /* 线路卡片 */
+        .line-card {
+            background: rgba(255,255,255,0.03); border-radius: 12px; padding: 16px;
+            margin-top: 16px; border-left: 4px solid #6366f1;
+        }
+        .line-card-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .line-card-head .line-title { font-size: 15px; font-weight: 700; color: #e2e8f0; }
+        .icon-btn { background: transparent; border: none; cursor: pointer; font-size: 13px; padding: 4px 6px; border-radius: 6px; }
+        .icon-btn.del { color: #f87171; } .icon-btn.del:hover { background: rgba(248,113,113,0.12); }
+
+        .stop-item {
+            background: rgba(255,255,255,0.02); border-radius: 8px; padding: 10px 12px; margin-top: 8px;
+            display: flex; justify-content: space-between; align-items: center; gap: 8px;
+        }
+        .stop-item .stop-main { font-size: 13px; font-weight: 600; color: #cbd5e1; }
+        .stop-item .stop-sub { font-size: 11px; color: #94a3b8; margin-top: 3px; line-height: 1.5; }
+        .stop-seq {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 22px; height: 22px; border-radius: 50%;
+            color: #fff; font-size: 11px; font-weight: 700; flex-shrink: 0;
+        }
+        .stop-time-badge {
+            display: inline-block; font-size: 10px; padding: 1px 6px; border-radius: 4px;
+            background: rgba(99,102,241,0.15); color: #a5b4fc; margin-right: 4px;
+        }
+
+        .add-stop-btn {
+            margin-top: 10px; width: 100%; padding: 8px; border: 1px dashed rgba(165,180,252,0.4);
+            background: transparent; color: #a5b4fc; border-radius: 8px; cursor: pointer; font-size: 12px;
+        }
+        .add-stop-btn:hover { background: rgba(99,102,241,0.08); }
+
+        /* 站点录入表单 */
+        .stop-form { margin-top: 10px; padding: 12px; background: rgba(0,0,0,0.25); border-radius: 8px; display: none; }
+        .stop-form.open { display: block; }
+        .stop-form label { display: block; font-size: 11px; color: #94a3b8; margin: 8px 0 3px; }
+        .stop-form input {
+            width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.04); color: #e2e8f0; font-size: 13px;
+        }
+        .stop-form input:focus { outline: none; border-color: #6366f1; }
+        .time-row { display: flex; gap: 10px; }
+        .time-row > div { flex: 1; }
+        .form-actions { display: flex; gap: 8px; margin-top: 12px; }
+        .form-actions button { flex: 1; padding: 8px; border-radius: 6px; font-size: 12px; cursor: pointer; border: none; }
+        .btn-save { background: #6366f1; color: #fff; font-weight: 600; }
+        .btn-cancel { background: rgba(255,255,255,0.08); color: #cbd5e1; }
+
+        .empty-hint { text-align: center; color: #64748b; font-size: 13px; padding: 30px 0; }
+
+        /* 模式二占位 */
+        .placeholder-panel { text-align: center; padding: 50px 20px; color: #94a3b8; }
+        .placeholder-panel i { font-size: 46px; color: rgba(165,180,252,0.3); margin-bottom: 18px; }
+        .placeholder-panel h3 { color: #c7d2fe; font-size: 16px; margin-bottom: 10px; }
+        .placeholder-panel p { font-size: 13px; line-height: 1.7; }
+
+        /* ===== 右侧地图 ===== */
+        #map { flex: 1; height: 100%; }
+        #map .map-fallback { color: #fca5a5; padding: 40px; font-size: 15px; line-height: 1.8; }
+
+        /* 线路时间输入区 */
+        .line-time-row {
+            display: flex; gap: 8px; margin: 8px 0 10px; padding: 8px 10px;
+            background: rgba(99,102,241,0.06); border-radius: 8px; align-items: center;
+        }
+        .line-time-row label { font-size: 11px; color: #94a3b8; white-space: nowrap; }
+        .line-time-row input[type="time"] {
+            padding: 4px 6px; border-radius: 5px; border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.04); color: #e2e8f0; font-size: 12px; width: 90px;
+        }
+        .line-time-row input[type="time"]:focus { outline: none; border-color: #6366f1; }
+
+        /* 统计栏 */
+        .line-stats {
+            margin-top: 10px; padding: 10px 12px; border-radius: 8px;
+            background: rgba(0,0,0,0.2); font-size: 12px; color: #94a3b8; display: none;
+        }
+        .line-stats.show { display: block; }
+        .line-stats .stat-row { display: flex; align-items: center; gap: 6px; margin: 4px 0; }
+        .line-stats .stat-value { color: #e2e8f0; font-weight: 600; }
+        .line-stats .stat-label-tag {
+            display: inline-block; padding: 1px 6px; border-radius: 4px; font-size: 10px;
+        }
+        .line-stats .tag-am { background: rgba(251,191,36,0.15); color: #fbbf24; }
+        .line-stats .tag-pm { background: rgba(96,165,250,0.15); color: #60a5fa; }
+
+        /* 生成路线按钮 */
+        .btn-generate {
+            width: 100%; padding: 12px; border: none; border-radius: 10px; margin-top: 12px;
+            background: linear-gradient(135deg, #10b981, #34d399);
+            color: #fff; font-size: 14px; font-weight: 700; cursor: pointer;
+            transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .btn-generate:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(16,185,129,0.4); }
+        .btn-generate:disabled { background: rgba(16,185,129,0.3); cursor: not-allowed; transform: none; box-shadow: none; }
+
+        /* 头像 */
+        .avatar-btn {
+            width: 36px; height: 36px; border-radius: 50%; border: 2px solid rgba(165,180,252,0.5);
+            background: linear-gradient(135deg, #6366f1, #a855f7); color: #fff;
+            font-size: 14px; font-weight: 700; cursor: pointer; display: flex;
+            align-items: center; justify-content: center; overflow: hidden; margin-right: 10px;
+        }
+        .avatar-btn img { width: 100%; height: 100%; object-fit: cover; }
+        .avatar-btn:hover { border-color: #a5b4fc; box-shadow: 0 0 10px rgba(99,102,241,0.4); }
+
+        /* 模态框 */
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); z-index: 1000; align-items: center; justify-content: center;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal-box {
+            background: #1e1e36; border-radius: 16px; padding: 28px 32px; width: 400px; max-width: 90%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.08);
+        }
+        .modal-box h2 { font-size: 18px; color: #e2e8f0; margin-bottom: 20px; }
+        .modal-box label { display: block; font-size: 12px; color: #94a3b8; margin: 12px 0 4px; }
+        .modal-box input[type="text"], .modal-box input[type="email"], .modal-box input[type="password"] {
+            width: 100%; padding: 9px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.04); color: #e2e8f0; font-size: 13px;
+        }
+        .modal-box input:focus { outline: none; border-color: #6366f1; }
+        .modal-avatar-preview {
+            width: 72px; height: 72px; border-radius: 50%; border: 3px solid rgba(165,180,252,0.4);
+            margin: 0 auto 12px; display: flex; align-items: center; justify-content: center;
+            overflow: hidden; background: rgba(99,102,241,0.1); font-size: 28px; color: #a5b4fc;
+        }
+        .modal-avatar-preview img { width: 100%; height: 100%; object-fit: cover; }
+        .modal-avatar-upload {
+            display: block; text-align: center; margin-bottom: 8px; font-size: 12px;
+            color: #a5b4fc; cursor: pointer; text-decoration: underline;
+        }
+        .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+        .modal-actions button { flex: 1; padding: 10px; border-radius: 8px; font-size: 13px; cursor: pointer; border: none; font-weight: 600; }
+        .modal-actions .btn-save { background: #6366f1; color: #fff; }
+        .modal-actions .btn-save:hover { background: #4f46e5; }
+        .modal-actions .btn-cancel { background: rgba(255,255,255,0.08); color: #cbd5e1; }
+        .modal-actions .btn-cancel:hover { background: rgba(255,255,255,0.12); }
+        .pwd-hint { font-size: 11px; margin-top: 4px; }
+        .pwd-hint.ok { color: #34d399; }
+        .pwd-hint.err { color: #f87171; }
+
+        /* 站点编辑按钮 */
+        .icon-btn.edit { color: #60a5fa; }
+        .icon-btn.edit:hover { background: rgba(96,165,250,0.12); }
+
+        /* ===== 优化 Tab 样式 ===== */
+        .opt-step {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+            padding: 18px 20px;
+            margin-bottom: 16px;
+        }
+        .opt-step h3 {
+            font-size: 15px; font-weight: 700; margin-bottom: 8px;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .step-badge {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 24px; height: 24px; border-radius: 50%;
+            background: linear-gradient(135deg, #6366f1, #a855f7);
+            font-size: 12px; font-weight: 700; color: #fff;
+        }
+        .step-desc { font-size: 12px; color: #94a3b8; margin-bottom: 12px; }
+
+        .upload-area {
+            border: 2px dashed rgba(99,102,241,0.4); border-radius: 10px;
+            padding: 30px; text-align: center; cursor: pointer;
+            transition: border-color 0.2s; position: relative;
+        }
+        .upload-area:hover { border-color: #6366f1; }
+        .upload-area i { font-size: 32px; color: #6366f1; display: block; margin-bottom: 8px; }
+        .upload-area span { font-size: 13px; color: #94a3b8; }
+        .upload-area input[type="file"] {
+            position: absolute; inset: 0; opacity: 0; cursor: pointer;
+        }
+
+        .result-bar {
+            display: flex; justify-content: space-between; align-items: center;
+            margin: 12px 0 8px; font-size: 13px; color: #a5b4fc;
+        }
+        .btn-small {
+            padding: 4px 10px; border-radius: 6px; font-size: 11px;
+            border: none; cursor: pointer; font-weight: 600;
+        }
+        .btn-danger { background: rgba(239,68,68,0.15); color: #f87171; }
+        .btn-danger:hover { background: rgba(239,68,68,0.3); }
+
+        .mini-table { width: 100%; font-size: 12px; border-collapse: collapse; }
+        .mini-table th { color: #94a3b8; text-align: left; padding: 6px 8px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+        .mini-table td { padding: 5px 8px; color: #cbd5e1; border-bottom: 1px solid rgba(255,255,255,0.04); }
+        .table-scroll { max-height: 220px; overflow-y: auto; border-radius: 6px; }
+        .table-scroll::-webkit-scrollbar { width: 5px; }
+        .table-scroll::-webkit-scrollbar-track { background: rgba(255,255,255,0.04); border-radius: 3px; }
+        .table-scroll::-webkit-scrollbar-thumb { background: rgba(165,180,252,0.35); border-radius: 3px; }
+        .table-scroll::-webkit-scrollbar-thumb:hover { background: rgba(165,180,252,0.6); }
+
+        .btn-primary {
+            padding: 10px 20px; border-radius: 8px; border: none;
+            background: linear-gradient(135deg, #6366f1, #a855f7);
+            color: #fff; font-size: 13px; font-weight: 700; cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 15px rgba(99,102,241,0.4); }
+        .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+
+        .btn-generate {
+            background: linear-gradient(135deg, #10b981, #34d399);
+            width: 100%; padding: 14px; font-size: 15px;
+        }
+        .btn-generate:hover { box-shadow: 0 4px 15px rgba(16,185,129,0.4); }
+
+        .param-row { display: flex; gap: 16px; margin-bottom: 12px; flex-wrap: wrap; }
+        .param-row label { font-size: 13px; color: #cbd5e1; display: flex; align-items: center; gap: 8px; }
+        .param-row input[type="number"] {
+            width: 70px; padding: 6px 10px; border-radius: 6px;
+            border: 1px solid rgba(255,255,255,0.15); background: rgba(0,0,0,0.3);
+            color: #fff; font-size: 13px; text-align: center;
+        }
+
+        .progress-bar {
+            height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px;
+            margin: 10px 0 6px; overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%; background: linear-gradient(90deg, #6366f1, #a855f7);
+            border-radius: 3px; transition: width 0.3s; width: 0%;
+        }
+
+        #cluster-result, #stops-result {
+            margin-top: 12px; font-size: 13px; color: #a5b4fc;
+        }
+        .zone-tag {
+            display: inline-block; padding: 3px 10px; border-radius: 12px;
+            font-size: 11px; font-weight: 700; margin: 3px 4px 3px 0;
+        }
+        .zone-block { margin-bottom: 10px; }
+        .zone-student-list {
+            margin-top: 6px; padding: 6px 10px;
+            background: rgba(255,255,255,0.03); border-radius: 8px;
+            max-height: 120px; overflow-y: auto;
+        }
+        .zone-student-list::-webkit-scrollbar { width: 4px; }
+        .zone-student-list::-webkit-scrollbar-thumb { background: rgba(165,180,252,0.3); border-radius: 2px; }
+        .zone-student-row { font-size: 11px; color: #94a3b8; padding: 2px 0; display: flex; gap: 10px; }
+        .zone-student-row span:first-child { min-width: 80px; color: #cbd5e1; }
+
+        #comparison-result {
+            font-size: 13px;
+        }
+        .compare-card {
+            background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 10px; padding: 14px 16px; margin-bottom: 10px;
+        }
+        .compare-card h4 { font-size: 13px; margin-bottom: 8px; color: #a5b4fc; }
+        .compare-row { display: flex; justify-content: space-between; padding: 4px 0; color: #cbd5e1; font-size: 12px; }
+        .compare-value { font-weight: 700; }
+        .compare-value.better { color: #34d399; }
+        .compare-value.worse { color: #f87171; }
+
+        /* 优化站点列表 —— 每个分区一张卡片，左侧竖条与「现有校车线路」line-card 一致 */
+        .opt-zone-group {
+            background: rgba(255,255,255,0.03);
+            border-radius: 12px;
+            padding: 8px 12px;
+            margin-top: 16px;
+            border-left: 4px solid var(--zone-color, #6366f1);
+        }
+        .opt-stop-row {
+            display: flex; align-items: flex-start; gap: 10px;
+            padding: 10px 4px; margin: 0;
+        }
+        .opt-stop-row + .opt-stop-row {
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+        .opt-stop-row .num-dot {
+            flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%; margin-top: 1px;
+            display: flex; align-items: center; justify-content: center;
+            color: #fff; font-size: 12px; font-weight: 700;
+            border: 2px solid rgba(255,255,255,0.85);
+        }
+        .opt-stop-row .body { flex: 1; min-width: 0; }
+        .opt-stop-row .addr { font-size: 12px; color: #cbd5e1; line-height: 1.4; word-break: break-word; }
+        .opt-stop-row .meta { font-size: 12px; color: #94a3b8; margin-top: 3px; }
+        .opt-adjusted-badge {
+            display: inline-block; margin-top: 4px; font-size: 11px;
+            color: #fbbf24; font-weight: 600;
+        }
+
+        /* 分区卡片头部 + 待确认/已优化徽章 */
+        .opt-zone-head {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 8px 4px 6px; margin-bottom: 2px;
+        }
+        .opt-zone-title { font-size: 14px; font-weight: 700; }
+        .opt-zone-status {
+            font-size: 11px; font-weight: 700; padding: 2px 10px; border-radius: 10px;
+        }
+        .opt-zone-status.pending { background: rgba(251,191,36,0.15); color: #fbbf24; }
+        .opt-zone-status.optimized { background: rgba(52,211,153,0.15); color: #34d399; }
+
+        /* 确认 / 重置按钮 */
+        .btn-confirm-stops {
+            width: 100%; padding: 12px; border: none; border-radius: 10px;
+            background: linear-gradient(135deg, #6366f1, #a855f7);
+            color: #fff; font-size: 14px; font-weight: 700; cursor: pointer;
+            transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .btn-confirm-stops:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(99,102,241,0.4); }
+        .btn-confirm-stops:disabled { opacity: 0.45; cursor: not-allowed; }
+        .btn-confirm-stops.done { background: rgba(52,211,153,0.18); color: #34d399; }
+        .btn-reset-stops {
+            width: 100%; padding: 10px; margin-top: 10px;
+            border: 1px solid rgba(239,68,68,0.4); border-radius: 10px;
+            background: rgba(239,68,68,0.08); color: #fca5a5;
+            font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .btn-reset-stops:hover { background: rgba(239,68,68,0.18); border-color: rgba(239,68,68,0.7); }
+    </style>
+</head>
+<body>
+    <div id="dashboard">
+        <div class="dash-header">
+            <div>
+                <h1>校车线路管理</h1>
+                <div class="school-name" id="school-name">加载中…</div>
+            </div>
+            <div style="display:flex; align-items:center;">
+                <span id="header-username" style="font-size:12px; color:#a5b4fc; margin-right:10px; font-weight:600;"></span>
+                <button class="avatar-btn" id="avatar-btn" onclick="openProfileModal()" title="个人信息">
+                    <span id="avatar-placeholder">?</span>
+                </button>
+                <button class="btn-logout" onclick="handleLogout()">
+                    <i class="fa-solid fa-right-from-bracket"></i> 登出
+                </button>
+            </div>
+        </div>
+
+        <div class="mode-tabs">
+            <div class="mode-tab active" id="tab-existing" onclick="switchMode('existing')">现有校车线路</div>
+            <div class="mode-tab" id="tab-optimized" onclick="switchMode('optimized')">优化后校车线路</div>
+        </div>
+
+        <!-- 模式一：现有校车线路 -->
+        <div class="panel" id="panel-existing">
+            <button class="btn-primary" onclick="createLine()">
+                <i class="fa-solid fa-plus"></i> 新建校车线路
+            </button>
+            <!-- 新建线路内联表单（点击"新建校车线路"后展开）-->
+            <div id="new-line-form" class="line-card" style="display:none; border-left-color:#6366f1; margin-top:12px;">
+                <div style="font-size:13px; font-weight:700; color:#e2e8f0; margin-bottom:10px;">
+                    <i class="fa-solid fa-route" style="color:#6366f1;"></i> 新建线路
+                </div>
+                <label style="font-size:11px; color:#94a3b8; display:block; margin-bottom:4px;">线路名称</label>
+                <input type="text" id="new-line-name" placeholder="如：1号线 / 城东线"
+                    style="width:100%; padding:8px 10px; border-radius:6px; border:1px solid rgba(255,255,255,0.1);
+                           background:rgba(255,255,255,0.04); color:#e2e8f0; font-size:13px;"
+                    onkeydown="if(event.key==='Enter')submitNewLine()">
+                <div class="form-actions" style="margin-top:12px;">
+                    <button class="btn-save" onclick="submitNewLine()">确认新建</button>
+                    <button class="btn-cancel" onclick="cancelNewLine()">取消</button>
+                </div>
+            </div>
+            <div id="lines-container">
+                <div class="empty-hint">还没有线路，点击上方按钮新建第一条。</div>
+            </div>
+            <button class="btn-generate" id="btn-gen-routes" onclick="generateRoutes()" style="display:none; margin-top:12px;">
+                <i class="fa-solid fa-road"></i> 生成校车实际运行路线
+            </button>
+        </div>
+
+        <!-- 模式二：优化后校车线路 -->
+        <div class="panel" id="panel-optimized" style="display:none;">
+
+            <!-- Step 1: 导入学生数据 -->
+            <div class="opt-step" id="opt-step-1">
+                <h3><span class="step-badge">1</span> 导入学生数据</h3>
+                <p class="step-desc">上传包含学生姓名、年级、家庭住址的 Excel 文件（.xlsx）</p>
+                <div class="upload-area" id="upload-area">
+                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                    <span>点击选择文件或拖拽到此处</span>
+                    <input type="file" id="student-file-input" accept=".xlsx,.xls" onchange="handleFileUpload(event)">
+                </div>
+                <div id="upload-result" style="display:none;">
+                    <div class="result-bar">
+                        <span id="upload-count"></span>
+                        <button class="btn-small btn-danger" onclick="clearStudents()">
+                            <i class="fa-solid fa-trash"></i> 清空重来
+                        </button>
+                    </div>
+                    <div class="table-scroll">
+                    <table class="mini-table" id="student-preview-table">
+                        <thead><tr><th>姓名</th><th>年级</th><th>地址</th></tr></thead>
+                        <tbody id="student-preview-body"></tbody>
+                    </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 2: 地址解析 -->
+            <div class="opt-step" id="opt-step-2" style="display:none;">
+                <h3><span class="step-badge">2</span> 地址解析 (Geocoding)</h3>
+                <p class="step-desc">将学生家庭住址转换为地图坐标</p>
+                <button class="btn-primary" id="btn-geocode" onclick="startGeocode()">
+                    <i class="fa-solid fa-map-location-dot"></i> 开始解析地址
+                </button>
+                <div id="geocode-progress" style="display:none;">
+                    <div class="progress-bar"><div class="progress-fill" id="geocode-fill"></div></div>
+                    <span id="geocode-status"></span>
+                </div>
+                <div id="geocode-failed" style="display:none;"></div>
+                <div id="geocode-result-list" style="display:none; margin-top:10px;">
+                    <div class="table-scroll">
+                        <table class="mini-table" id="geocode-student-table">
+                            <thead><tr><th>#</th><th>姓名</th><th>年级</th><th>纬度</th><th>经度</th></tr></thead>
+                            <tbody id="geocode-student-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3: 校车分区 -->
+            <div class="opt-step" id="opt-step-3" style="display:none;">
+                <h3><span class="step-badge">3</span> 校车分区</h3>
+                <p class="step-desc">设置校车数量和容量，系统自动按地理位置分区</p>
+                <div class="param-row">
+                    <label>校车数量：<input type="number" id="input-bus-count" value="3" min="1" max="20"></label>
+                    <label>每车座位：<input type="number" id="input-bus-capacity" value="45" min="10" max="80"></label>
+                </div>
+                <button class="btn-primary" id="btn-cluster" onclick="startCluster()">
+                    <i class="fa-solid fa-layer-group"></i> 开始分区
+                </button>
+                <div id="cluster-result" style="display:none;"></div>
+            </div>
+
+            <!-- Step 4: 站点优化 -->
+            <div class="opt-step" id="opt-step-4" style="display:none;">
+                <h3><span class="step-badge">4</span> 站点优化</h3>
+                <p class="step-desc">系统计算每条线路的最优站点位置，可拖拽调整</p>
+                <div class="param-row">
+                    <label>每线路最大站点数：<input type="number" id="input-max-stops" value="6" min="2" max="10"></label>
+                </div>
+                <button class="btn-primary" id="btn-optimize-stops" onclick="startOptimizeStops()">
+                    <i class="fa-solid fa-location-crosshairs"></i> 计算最优站点
+                </button>
+                <div id="stops-result" style="display:none;"></div>
+                <div id="stops-actions" style="display:none; margin-top:14px;">
+                    <button class="btn-confirm-stops" id="btn-confirm-stops" onclick="confirmStops()" disabled>
+                        <i class="fa-solid fa-check"></i> 确认站点位置
+                    </button>
+                    <button class="btn-reset-stops" id="btn-reset-stops" onclick="resetStops()">
+                        <i class="fa-solid fa-rotate-left"></i> 重置站点位置（恢复算法原始结果）
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 5: 生成路线 -->
+            <div class="opt-step" id="opt-step-5" style="display:none;">
+                <h3><span class="step-badge">5</span> 生成优化路线</h3>
+                <p class="step-desc">根据站点位置计算最优行驶路线</p>
+                <button class="btn-primary btn-generate" id="btn-gen-opt-routes" onclick="startGenerateRoutes()">
+                    <i class="fa-solid fa-route"></i> 生成优化后校车线路
+                </button>
+                <p class="step-desc" style="font-size:11px;margin-top:8px;color:#94a3b8;">
+                    实线 = 早上上学（7:00 路况）&nbsp;&nbsp;虚线 = 下午放学（16:30 路况）
+                </p>
+            </div>
+
+            <!-- Step 6: 各线路行驶里程和耗时 -->
+            <div class="opt-step" id="opt-step-6" style="display:none;">
+                <h3><span class="step-badge">6</span> 各线路行驶里程和耗时</h3>
+                <div id="comparison-result"></div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- 个人信息编辑模态框 -->
+    <div class="modal-overlay" id="profile-modal" onclick="if(event.target===this)closeProfileModal()">
+        <div class="modal-box">
+            <h2><i class="fa-solid fa-user-pen"></i> 个人信息</h2>
+            <div class="modal-avatar-preview" id="modal-avatar-preview">
+                <span id="modal-avatar-placeholder"><i class="fa-solid fa-user"></i></span>
+            </div>
+            <label class="modal-avatar-upload" onclick="document.getElementById('avatar-file-input').click()">
+                <i class="fa-solid fa-camera"></i> 更换头像
+            </label>
+            <input type="file" id="avatar-file-input" accept="image/*" style="display:none" onchange="previewAvatar(event)">
+
+            <label>用户名（不可修改）</label>
+            <input type="text" id="profile-username" disabled style="opacity:0.5;">
+
+            <label>邮箱</label>
+            <input type="email" id="profile-email" placeholder="your@email.com">
+
+            <label style="margin-top:18px; font-size:13px; color:#c7d2fe; font-weight:600;">修改密码</label>
+            <label>旧密码</label>
+            <input type="password" id="profile-old-pwd" placeholder="输入当前密码">
+            <label>新密码</label>
+            <input type="password" id="profile-new-pwd" placeholder="输入新密码" oninput="checkPwdMatch()">
+            <label>确认新密码</label>
+            <input type="password" id="profile-new-pwd2" placeholder="再次输入新密码" oninput="checkPwdMatch()">
+            <div class="pwd-hint" id="pwd-match-hint"></div>
+
+            <div class="modal-actions">
+                <button class="btn-save" onclick="saveProfile()">保存</button>
+                <button class="btn-cancel" onclick="closeProfileModal()">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 手工录入 Geocoding 失败地址的模态框 -->
+    <div class="modal-overlay" id="manual-geocode-modal" onclick="if(event.target===this)closeManualGeocodeModal()">
+        <div class="modal-box" style="width:520px; max-height:80vh; overflow-y:auto;">
+            <h2 style="margin-bottom:8px;">
+                <i class="fa-solid fa-map-location-dot"></i> 手工录入地址
+            </h2>
+            <p style="font-size:12px;color:#94a3b8;margin-bottom:20px;">
+                以下学生地址无法自动解析，请在输入框中搜索并选择正确地址后提交。
+            </p>
+            <div id="manual-geocode-list"></div>
+            <div class="modal-actions">
+                <button class="btn-save" onclick="submitManualGeocodes()">
+                    <i class="fa-solid fa-check"></i> 全部提交
+                </button>
+                <button class="btn-cancel" onclick="closeManualGeocodeModal()">稍后处理</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="map"></div>
+
+    <!-- 本地密钥配置 (config.js 已被 .gitignore 屏蔽)，必须在主脚本之前加载 -->
+    <script src="/frontend/config.js"></script>
+    <script>
+        // 鉴权已由 <head> 中的 auth_guard.js + checkAuth('SchoolAdmin') 完成
+
+        function getAuthHeaders() {
+            return {
+                'Authorization': 'Bearer ' + localStorage.getItem('access_token'),
+                'Content-Type': 'application/json',
+            };
+        }
+        function handleLogout() {
+            logout(); // 调用 auth_guard.js 中的统一退出
+        }
+
+        const API_KEY = window.GOOGLE_MAPS_API_KEY || "";
+        const COLOR_PALETTE = ["#34d399","#60a5fa","#fbbf24","#f87171","#c084fc","#fb923c","#f472b6","#38bdf8","#a3e635","#e879f9"];
+
+        let map, geocoder, infoWindow;
+        let school = null;
+        let lines = [];
+        const stopMarkers = [];
+        let schoolMarker = null;
+        let currentMode = 'existing'; // 当前激活的 tab
+
+        // 隐藏/显示现有路线层（stopMarkers + routePolylines）
+        function setExistingLayerVisible(visible) {
+            stopMarkers.forEach(m => m.setMap(visible ? map : null));
+            routePolylines.forEach(p => p.setMap(visible ? map : null));
+            if (schoolMarker) schoolMarker.setMap(map); // 学校标记始终显示
+        }
+
+        // 隐藏/显示优化路线层（optMarkers + optStopMarkers + optPolylines）
+        function setOptLayerVisible(visible) {
+            optMarkers.forEach(m => m.setMap(visible ? map : null));
+            optStopMarkers.forEach(m => m.setMap(visible ? map : null));
+            optPolylines.forEach(p => p.setMap(visible ? map : null));
+        }
+
+        // ===== 模式切换 =====
+        function switchMode(mode) {
+            currentMode = mode;
+            const isExisting = mode === 'existing';
+            document.getElementById('tab-existing').classList.toggle('active', isExisting);
+            document.getElementById('tab-optimized').classList.toggle('active', !isExisting);
+            document.getElementById('panel-existing').style.display = isExisting ? 'block' : 'none';
+            document.getElementById('panel-optimized').style.display = isExisting ? 'none' : 'block';
+
+            // 切换地图层
+            setExistingLayerVisible(isExisting);
+            setOptLayerVisible(!isExisting);
+        }
+
+        // ===== 地图初始化（Google Maps callback）=====
+        function initMap() {
+            geocoder = new google.maps.Geocoder();
+            infoWindow = new google.maps.InfoWindow();
+            map = new google.maps.Map(document.getElementById("map"), {
+                center: { lat: 26.72, lng: -80.12 }, zoom: 11,
+                styles: [
+                    { elementType: "geometry", stylers: [{ color: "#242f3e" }] },
+                    { elementType: "labels.text.fill", stylers: [{ color: "#746855" }] },
+                    { elementType: "labels.text.stroke", stylers: [{ color: "#242f3e" }] },
+                    { featureType: "road", elementType: "geometry", stylers: [{ color: "#38414e" }] },
+                    { featureType: "water", elementType: "geometry", stylers: [{ color: "#17263c" }] }
+                ]
+            });
+            bootstrap();
+        }
+
+        // 拉取本校信息 + 线路数据
+        async function bootstrap() {
+            await loadSchool();
+            await loadLines();
+            await loadProfile();
+        }
+
+        async function loadSchool() {
+            try {
+                const resp = await fetch('/api/school/me', { headers: getAuthHeaders() });
+                if (resp.status === 401 || resp.status === 403) { handleLogout(); return; }
+                school = await resp.json();
+                document.getElementById('school-name').innerText = school.school_name || '未命名学校';
+
+                if (school.latitude && school.longitude && map) {
+                    const pos = { lat: school.latitude, lng: school.longitude };
+                    map.setCenter(pos); map.setZoom(13);
+                    schoolMarker = new google.maps.Marker({
+                        position: pos, map,
+                        title: school.school_name,
+                        label: { text: "HQ", color: "#fff", fontWeight: "bold" },
+                        icon: { path: google.maps.SymbolPath.CIRCLE, scale: 12,
+                                fillColor: "#7c3aed", fillOpacity: 1, strokeColor: "#fff", strokeWeight: 2 },
+                        zIndex: 10
+                    });
+                }
+            } catch (e) { console.error("加载学校信息失败:", e); }
+        }
+
+        async function loadLines() {
+            try {
+                const resp = await fetch('/api/school/lines', { headers: getAuthHeaders() });
+                if (resp.status === 401 || resp.status === 403) { handleLogout(); return; }
+                lines = await resp.json();
+                renderLines();
+                renderStopMarkers();
+            } catch (e) { console.error("加载线路失败:", e); }
+        }
+
+        // ===== 左侧线路列表渲染 =====
+        function renderLines() {
+            const container = document.getElementById('lines-container');
+            if (!lines.length) {
+                container.innerHTML = '<div class="empty-hint">还没有线路，点击上方按钮新建第一条。</div>';
+                // 无线路时隐藏生成路线按钮
+                document.getElementById('btn-gen-routes').style.display = 'none';
+                return;
+            }
+            container.innerHTML = lines.map((ln, idx) => {
+                const color = COLOR_PALETTE[idx % COLOR_PALETTE.length];
+                // 按 sequence 排序站点
+                const sortedStops = ln.stops.slice().sort((a, b) => (a.sequence || 0) - (b.sequence || 0));
+                const stopsHtml = sortedStops.length
+                    ? sortedStops.map((s, seqIdx) => {
+                        const seqNum = s.sequence || (seqIdx + 1);
+                        return `
+                        <div class="stop-item">
+                            <span class="stop-seq" style="background:${color};">${seqNum}</span>
+                            <div style="flex:1; min-width:0;">
+                                <div class="stop-main">${escapeHtml(s.stop_name)}</div>
+                                <div class="stop-sub">
+                                    ${s.address ? '<i class="fa-solid fa-location-dot"></i> ' + escapeHtml(s.address) + '<br>' : ''}
+                                    ${s.arrival_morning ? '<span class="stop-time-badge">早上：' + s.arrival_morning + '</span>' : ''}
+                                    ${s.arrival_afternoon ? '<span class="stop-time-badge">下午：' + s.arrival_afternoon + '</span>' : ''}
+                                </div>
+                            </div>
+                            <div style="display:flex;gap:2px;flex-shrink:0;">
+                                <button class="icon-btn edit" onclick="openEditStop(${ln.line_id}, ${s.stop_id})" title="编辑站点">
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                </button>
+                                <button class="icon-btn del" onclick="deleteStop(${s.stop_id})" title="删除站点">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="stop-form" id="edit-stop-form-${s.stop_id}">
+                            <label>站点名称</label>
+                            <input type="text" id="es-name-${s.stop_id}" value="${escapeHtml(s.stop_name)}">
+                            <label>站点地址</label>
+                            <input type="text" id="es-addr-${s.stop_id}" value="${escapeHtml(s.address || '')}">
+                            <div class="time-row">
+                                <div>
+                                    <label>早上到站</label>
+                                    <input type="time" id="es-am-${s.stop_id}" value="${s.arrival_morning || ''}">
+                                </div>
+                                <div>
+                                    <label>下午到站</label>
+                                    <input type="time" id="es-pm-${s.stop_id}" value="${s.arrival_afternoon || ''}">
+                                </div>
+                            </div>
+                            <div class="form-actions">
+                                <button class="btn-save" onclick="saveEditStop(${s.stop_id})">保存修改</button>
+                                <button class="btn-cancel" onclick="closeEditStop(${s.stop_id})">取消</button>
+                            </div>
+                        </div>`;
+                    }).join('')
+                    : '<div class="stop-sub" style="padding:6px 2px;">该线路下还没有站点。</div>';
+
+                return `
+                    <div class="line-card" style="border-left-color:${color}">
+                        <div class="line-card-head">
+                            <div class="line-title"><i class="fa-solid fa-route" style="color:${color}"></i> ${escapeHtml(ln.line_name)}</div>
+                            <button class="icon-btn del" onclick="deleteLine(${ln.line_id}, '${escapeJs(ln.line_name)}')" title="删除线路">
+                                <i class="fa-solid fa-trash"></i> 删除线路
+                            </button>
+                        </div>
+                        <div class="line-time-row">
+                            <label>早上到校</label>
+                            <input type="time" id="lt-am-${ln.line_id}" value="${ln.arrival_school_morning || ''}" onblur="saveLineTime(${ln.line_id})">
+                            <label>下午发车</label>
+                            <input type="time" id="lt-pm-${ln.line_id}" value="${ln.departure_school_afternoon || ''}" onblur="saveLineTime(${ln.line_id})">
+                        </div>
+                        ${stopsHtml}
+                        <button class="add-stop-btn" onclick="toggleStopForm(${ln.line_id})">
+                            <i class="fa-solid fa-plus"></i> 新建站点
+                        </button>
+                        <div class="stop-form" id="stop-form-${ln.line_id}">
+                            <label>站点名称</label>
+                            <input type="text" id="sf-name-${ln.line_id}" placeholder="如：阳光小区站">
+                            <label>站点地址（输入时自动补全）</label>
+                            <input type="text" id="sf-addr-${ln.line_id}" placeholder="开始输入地址…">
+                            <div class="time-row">
+                                <div>
+                                    <label>早上到站（上学）</label>
+                                    <input type="time" id="sf-am-${ln.line_id}">
+                                </div>
+                                <div>
+                                    <label>下午到站（放学）</label>
+                                    <input type="time" id="sf-pm-${ln.line_id}">
+                                </div>
+                            </div>
+                            <div class="form-actions">
+                                <button class="btn-save" onclick="saveStop(${ln.line_id})">保存站点</button>
+                                <button class="btn-cancel" onclick="toggleStopForm(${ln.line_id})">取消</button>
+                            </div>
+                        </div>
+                        <div class="line-stats" id="stats-${ln.line_id}">
+                            <div class="stat-row">
+                                <span class="stat-label-tag tag-am">早上</span>
+                                总里程 <span class="stat-value" id="dist-am-${ln.line_id}">--</span> km ｜
+                                耗时 <span class="stat-value" id="dur-am-${ln.line_id}">--</span>
+                            </div>
+                            <div class="stat-row">
+                                <span class="stat-label-tag tag-pm">下午</span>
+                                总里程 <span class="stat-value" id="dist-pm-${ln.line_id}">--</span> km ｜
+                                耗时 <span class="stat-value" id="dur-pm-${ln.line_id}">--</span>
+                            </div>
+                        </div>
+                    </div>`;
+            }).join('');
+
+            // 有坐标站点时才显示「生成路线」按钮
+            const hasStops = lines.some(ln => ln.stops.some(s => s.latitude != null));
+            document.getElementById('btn-gen-routes').style.display = hasStops ? 'block' : 'none';
+        }
+
+        // 临时存放每个表单的地址补全经纬度
+        const pendingCoords = {};
+
+        function toggleStopForm(lineId) {
+            const form = document.getElementById(`stop-form-${lineId}`);
+            const willOpen = !form.classList.contains('open');
+            form.classList.toggle('open', willOpen);
+            if (willOpen) attachAutocomplete(lineId);
+        }
+
+        function attachAutocomplete(lineId) {
+            const input = document.getElementById(`sf-addr-${lineId}`);
+            if (!input || input.dataset.acBound) return;
+            input.dataset.acBound = "1";
+            const ac = new google.maps.places.Autocomplete(input);
+            ac.addListener('place_changed', () => {
+                const place = ac.getPlace();
+                if (place.geometry) {
+                    pendingCoords[lineId] = {
+                        lat: place.geometry.location.lat(),
+                        lng: place.geometry.location.lng()
+                    };
+                }
+            });
+        }
+
+        // ===== 地图站点标记 =====
+        function renderStopMarkers() {
+            stopMarkers.forEach(m => m.setMap(null));
+            stopMarkers.length = 0;
+            const bounds = new google.maps.LatLngBounds();
+            if (schoolMarker) bounds.extend(schoolMarker.getPosition());
+
+            lines.forEach((ln, idx) => {
+                const color = COLOR_PALETTE[idx % COLOR_PALETTE.length];
+                // 按 sequence 排序，确保序号与左侧列表一致
+                const sortedStops = ln.stops.slice().sort((a, b) => (a.sequence || 0) - (b.sequence || 0));
+                sortedStops.forEach((s, seqIdx) => {
+                    if (s.latitude == null || s.longitude == null) return;
+                    const seqNum = s.sequence || (seqIdx + 1);
+                    const pos = { lat: s.latitude, lng: s.longitude };
+                    const marker = new google.maps.Marker({
+                        position: pos, map, title: s.stop_name,
+                        icon: { path: google.maps.SymbolPath.CIRCLE, scale: 13,
+                                fillColor: color, fillOpacity: 0.9, strokeColor: "#fff", strokeWeight: 2 },
+                        label: { text: String(seqNum), color: '#fff', fontSize: '11px', fontWeight: 'bold' },
+                        zIndex: 5,
+                    });
+                    marker.addListener('click', () => {
+                        infoWindow.setContent(`
+                            <div style="color:#1a1a2e;font-size:13px;">
+                                <b>${seqNum}. ${escapeHtml(s.stop_name)}</b><br>
+                                线路：${escapeHtml(ln.line_name)}<br>
+                                ${s.address ? escapeHtml(s.address) + '<br>' : ''}
+                                ${s.arrival_morning ? '早上到站：' + s.arrival_morning + '<br>' : ''}
+                                ${s.arrival_afternoon ? '下午到站：' + s.arrival_afternoon : ''}
+                            </div>`);
+                        infoWindow.open(map, marker);
+                    });
+                    stopMarkers.push(marker);
+                    bounds.extend(pos);
+                });
+            });
+
+            if (stopMarkers.length && !bounds.isEmpty()) map.fitBounds(bounds);
+        }
+
+        // ===== 增删操作 =====
+        function createLine() {
+            const form = document.getElementById('new-line-form');
+            form.style.display = 'block';
+            document.getElementById('new-line-name').focus();
+        }
+
+        function cancelNewLine() {
+            document.getElementById('new-line-form').style.display = 'none';
+            document.getElementById('new-line-name').value = '';
+        }
+
+        async function submitNewLine() {
+            const name = document.getElementById('new-line-name').value.trim();
+            if (!name) { alert("线路名称不能为空"); return; }
+            try {
+                const resp = await fetch('/api/school/lines', {
+                    method: 'POST', headers: getAuthHeaders(),
+                    body: JSON.stringify({ line_name: name })
+                });
+                const result = await resp.json();
+                if (resp.ok) {
+                    cancelNewLine();
+                    await loadLines();
+                } else {
+                    alert("新建失败：" + (result.detail ?? '未知错误'));
+                }
+            } catch (e) { alert("网络错误，新建线路失败"); }
+        }
+
+        async function deleteLine(lineId, lineName) {
+            if (!confirm(`确定删除线路「${lineName}」吗？\n其下所有站点也会一并删除。`)) return;
+            try {
+                const resp = await fetch(`/api/school/lines/${lineId}`, { method: 'DELETE', headers: getAuthHeaders() });
+                const result = await resp.json();
+                if (resp.ok) { await loadLines(); }
+                else { alert("删除失败：" + (result.detail ?? '未知错误')); }
+            } catch (e) { alert("网络错误，删除线路失败"); }
+        }
+
+        async function saveStop(lineId) {
+            const name = document.getElementById(`sf-name-${lineId}`).value.trim();
+            const addr = document.getElementById(`sf-addr-${lineId}`).value.trim();
+            const am = document.getElementById(`sf-am-${lineId}`).value;
+            const pm = document.getElementById(`sf-pm-${lineId}`).value;
+            if (!name) { alert("请填写站点名称"); return; }
+
+            const coords = pendingCoords[lineId] || {};
+            const body = {
+                stop_name: name,
+                address: addr || null,
+                latitude: coords.lat ?? null,
+                longitude: coords.lng ?? null,
+                arrival_morning: am || null,
+                arrival_afternoon: pm || null,
+            };
+            try {
+                const resp = await fetch(`/api/school/lines/${lineId}/stops`, {
+                    method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(body)
+                });
+                const result = await resp.json();
+                if (resp.ok) { delete pendingCoords[lineId]; await loadLines(); }
+                else { alert("保存站点失败：" + (result.detail ?? '未知错误')); }
+            } catch (e) { alert("网络错误，保存站点失败"); }
+        }
+
+        async function deleteStop(stopId) {
+            if (!confirm("确定删除该站点吗？")) return;
+            try {
+                const resp = await fetch(`/api/school/stops/${stopId}`, { method: 'DELETE', headers: getAuthHeaders() });
+                const result = await resp.json();
+                if (resp.ok) { await loadLines(); }
+                else { alert("删除失败：" + (result.detail ?? '未知错误')); }
+            } catch (e) { alert("网络错误，删除站点失败"); }
+        }
+
+        // ===== 保存线路到校/发车时间（blur 自动触发）=====
+        async function saveLineTime(lineId) {
+            const am = document.getElementById(`lt-am-${lineId}`).value;
+            const pm = document.getElementById(`lt-pm-${lineId}`).value;
+            try {
+                await fetch(`/api/school/lines/${lineId}`, {
+                    method: 'PUT', headers: getAuthHeaders(),
+                    body: JSON.stringify({
+                        arrival_school_morning: am || null,
+                        departure_school_afternoon: pm || null,
+                    })
+                });
+                // 静默保存，同步更新内存中的 lines 数据
+                const ln = lines.find(l => l.line_id === lineId);
+                if (ln) {
+                    ln.arrival_school_morning = am || null;
+                    ln.departure_school_afternoon = pm || null;
+                }
+            } catch (e) { console.error("保存线路时间失败:", e); }
+        }
+
+        // ===== 生成校车实际运行路线 =====
+        let directionsService = null;
+        const routePolylines = [];
+
+        async function generateRoutes() {
+            const btn = document.getElementById('btn-gen-routes');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 正在生成路线...';
+
+            // 初始化 DirectionsService（如果尚未初始化）
+            if (!directionsService) {
+                directionsService = new google.maps.DirectionsService();
+            }
+
+            // 清除旧路线
+            routePolylines.forEach(p => p.setMap(null));
+            routePolylines.length = 0;
+
+            // 筛选有坐标站点的线路
+            const validLines = lines.filter(ln =>
+                ln.stops.length > 0 && ln.stops.some(s => s.latitude != null && s.longitude != null)
+            );
+
+            if (!validLines.length) {
+                alert("没有可用的线路数据（请确保站点有坐标信息）。");
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-road"></i> 生成校车实际运行路线';
+                return;
+            }
+
+            let completed = 0;
+            const total = validLines.length * 2; // 早上+下午 各一次
+
+            for (let idx = 0; idx < validLines.length; idx++) {
+                const ln = validLines[idx];
+                const color = COLOR_PALETTE[idx % COLOR_PALETTE.length];
+                // 有坐标的站点
+                const stopsWithCoords = ln.stops
+                    .filter(s => s.latitude != null && s.longitude != null);
+
+                if (stopsWithCoords.length === 0) continue;
+
+                const schoolPos = { lat: school.latitude, lng: school.longitude };
+
+                // --- 早上方向：按 arrival_morning 时间升序（最早站→…→学校）实线 ---
+                const amSorted = stopsWithCoords
+                    .filter(s => s.arrival_morning)
+                    .sort((a, b) => a.arrival_morning.localeCompare(b.arrival_morning));
+                const amStops = (amSorted.length > 0 ? amSorted : stopsWithCoords)
+                    .map(s => ({ lat: s.latitude, lng: s.longitude }));
+                const amOrigin = amStops[0];
+                const amDest = schoolPos;
+                const amWaypoints = amStops.slice(1).map(p => ({ location: p, stopover: true }));
+
+                drawDirectionsRoute({
+                    origin: amOrigin, destination: amDest, waypoints: amWaypoints,
+                    color, dashed: false, lineId: ln.line_id, direction: 'am'
+                }, () => { completed++; if (completed === total) onAllRoutesDrawn(btn); });
+
+                // --- 下午方向：学校→按 arrival_afternoon 时间升序→…→最晚站（虚线）---
+                const pmSorted = stopsWithCoords
+                    .filter(s => s.arrival_afternoon)
+                    .sort((a, b) => a.arrival_afternoon.localeCompare(b.arrival_afternoon));
+                const pmOrderedStops = (pmSorted.length > 0 ? pmSorted : [...stopsWithCoords].reverse())
+                    .map(s => ({ lat: s.latitude, lng: s.longitude }));
+                const pmOrigin = schoolPos;
+                const pmDest = pmOrderedStops[pmOrderedStops.length - 1];
+                const pmWaypoints = pmOrderedStops.slice(0, -1).map(p => ({ location: p, stopover: true }));
+
+                drawDirectionsRoute({
+                    origin: pmOrigin, destination: pmDest, waypoints: pmWaypoints,
+                    color, dashed: true, lineId: ln.line_id, direction: 'pm'
+                }, () => { completed++; if (completed === total) onAllRoutesDrawn(btn); });
+
+                // 计算耗时（基于时刻表）
+                computeDuration(ln, stopsWithCoords);
+            }
+        }
+
+        function drawDirectionsRoute({ origin, destination, waypoints, color, dashed, lineId, direction }, onDone) {
+            directionsService.route({
+                origin, destination, waypoints,
+                optimizeWaypoints: false,
+                travelMode: google.maps.TravelMode.DRIVING,
+            }, (result, status) => {
+                if (status === google.maps.DirectionsStatus.OK) {
+                    // 提取总里程
+                    let totalMeters = 0;
+                    result.routes[0].legs.forEach(leg => { totalMeters += leg.distance.value; });
+                    const km = (totalMeters / 1000).toFixed(2);
+
+                    // 填入统计栏
+                    const distEl = document.getElementById(`dist-${direction}-${lineId}`);
+                    if (distEl) distEl.textContent = km;
+
+                    // 显示统计栏
+                    const statsEl = document.getElementById(`stats-${lineId}`);
+                    if (statsEl) statsEl.classList.add('show');
+
+                    // 画 Polyline
+                    const polyline = new google.maps.Polyline({
+                        path: result.routes[0].overview_path,
+                        strokeColor: color,
+                        strokeOpacity: dashed ? 0 : 0.85,
+                        strokeWeight: dashed ? 4 : 5,
+                        map,
+                        icons: dashed ? [{
+                            icon: { path: 'M 0,-1 0,1', strokeOpacity: 0.7, strokeColor: color, scale: 3 },
+                            offset: '0', repeat: '14px'
+                        }] : []
+                    });
+                    routePolylines.push(polyline);
+                } else {
+                    console.warn(`Directions API 失败 (line ${lineId}, ${direction}): ${status}`);
+                    // 降级：直线
+                    const pts = [origin, ...waypoints.map(w => w.location), destination];
+                    const polyline = new google.maps.Polyline({
+                        path: pts, strokeColor: color, strokeOpacity: 0.5, strokeWeight: 3,
+                        strokePattern: dashed ? undefined : undefined, map,
+                    });
+                    routePolylines.push(polyline);
+                }
+                onDone();
+            });
+        }
+
+        // 从时刻表计算耗时
+        function computeDuration(ln, stopsWithCoords) {
+            // 早上：耗时 = arrival_school_morning - 最早站的 arrival_morning
+            const amStops = stopsWithCoords
+                .filter(s => s.arrival_morning)
+                .sort((a, b) => a.arrival_morning.localeCompare(b.arrival_morning));
+            if (ln.arrival_school_morning && amStops.length > 0) {
+                const earliest = amStops[0];
+                const diff = timeDiffMinutes(earliest.arrival_morning, ln.arrival_school_morning);
+                const durEl = document.getElementById(`dur-am-${ln.line_id}`);
+                if (durEl) durEl.textContent = `${diff} 分钟 (${earliest.arrival_morning} → ${ln.arrival_school_morning})`;
+            }
+
+            // 下午：耗时 = 最晚站的 arrival_afternoon - departure_school_afternoon
+            const pmStops = stopsWithCoords
+                .filter(s => s.arrival_afternoon)
+                .sort((a, b) => a.arrival_afternoon.localeCompare(b.arrival_afternoon));
+            if (ln.departure_school_afternoon && pmStops.length > 0) {
+                const latest = pmStops[pmStops.length - 1];
+                const diff = timeDiffMinutes(ln.departure_school_afternoon, latest.arrival_afternoon);
+                const durEl = document.getElementById(`dur-pm-${ln.line_id}`);
+                if (durEl) durEl.textContent = `${diff} 分钟 (${ln.departure_school_afternoon} → ${latest.arrival_afternoon})`;
+            }
+        }
+
+        // 时间差（分钟）："07:30" "08:10" → 40
+        function timeDiffMinutes(t1, t2) {
+            const [h1, m1] = t1.split(':').map(Number);
+            const [h2, m2] = t2.split(':').map(Number);
+            return (h2 * 60 + m2) - (h1 * 60 + m1);
+        }
+
+        function onAllRoutesDrawn(btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-road"></i> 生成校车实际运行路线';
+        }
+
+        // ===== 个人信息模态框 =====
+        let profileData = { username: '', email: '', avatar: null };
+        let pendingAvatarBase64 = null;
+
+        async function loadProfile() {
+            try {
+                const resp = await fetch('/api/school/profile', { headers: getAuthHeaders() });
+                if (resp.ok) {
+                    profileData = await resp.json();
+                    renderAvatar();
+                }
+            } catch (e) { console.error("加载个人信息失败:", e); }
+        }
+
+        function renderAvatar() {
+            const btn = document.getElementById('avatar-btn');
+            if (profileData.avatar) {
+                btn.innerHTML = `<img src="${profileData.avatar}" alt="avatar">`;
+            } else {
+                const initial = (profileData.username || '?').charAt(0).toUpperCase();
+                btn.innerHTML = `<span id="avatar-placeholder">${initial}</span>`;
+            }
+            document.getElementById('header-username').textContent = profileData.username || '';
+        }
+
+        function openProfileModal() {
+            pendingAvatarBase64 = null;
+            document.getElementById('profile-username').value = profileData.username || '';
+            document.getElementById('profile-email').value = profileData.email || '';
+            document.getElementById('profile-old-pwd').value = '';
+            document.getElementById('profile-new-pwd').value = '';
+            document.getElementById('profile-new-pwd2').value = '';
+            document.getElementById('pwd-match-hint').textContent = '';
+
+            // 头像预览
+            const preview = document.getElementById('modal-avatar-preview');
+            if (profileData.avatar) {
+                preview.innerHTML = `<img src="${profileData.avatar}" alt="avatar">`;
+            } else {
+                preview.innerHTML = '<span id="modal-avatar-placeholder"><i class="fa-solid fa-user"></i></span>';
+            }
+
+            document.getElementById('profile-modal').classList.add('open');
+        }
+
+        function closeProfileModal() {
+            document.getElementById('profile-modal').classList.remove('open');
+        }
+
+        function previewAvatar(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            if (file.size > 500 * 1024) {
+                alert("头像图片不能超过 500KB，请选择较小的图片。");
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                pendingAvatarBase64 = e.target.result;
+                document.getElementById('modal-avatar-preview').innerHTML =
+                    `<img src="${pendingAvatarBase64}" alt="preview">`;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function checkPwdMatch() {
+            const p1 = document.getElementById('profile-new-pwd').value;
+            const p2 = document.getElementById('profile-new-pwd2').value;
+            const hint = document.getElementById('pwd-match-hint');
+            if (!p1 && !p2) { hint.textContent = ''; return; }
+            if (p2 && p1 !== p2) {
+                hint.textContent = '✗ 两次输入的新密码不一致';
+                hint.className = 'pwd-hint err';
+            } else if (p2 && p1 === p2) {
+                hint.textContent = '✓ 密码一致';
+                hint.className = 'pwd-hint ok';
+            } else {
+                hint.textContent = '';
+            }
+        }
+
+        async function saveProfile() {
+            const email = document.getElementById('profile-email').value.trim();
+            const oldPwd = document.getElementById('profile-old-pwd').value;
+            const newPwd = document.getElementById('profile-new-pwd').value;
+            const newPwd2 = document.getElementById('profile-new-pwd2').value;
+
+            // 密码校验
+            if (newPwd || newPwd2) {
+                if (!oldPwd) { alert("请输入旧密码"); return; }
+                if (newPwd !== newPwd2) { alert("两次输入的新密码不一致"); return; }
+                if (newPwd.length < 6) { alert("新密码至少 6 个字符"); return; }
+            }
+
+            const body = {};
+            if (email && email !== profileData.email) body.email = email;
+            if (pendingAvatarBase64) body.avatar = pendingAvatarBase64;
+            if (newPwd) { body.old_password = oldPwd; body.new_password = newPwd; }
+
+            if (Object.keys(body).length === 0) {
+                closeProfileModal();
+                return;
+            }
+
+            try {
+                const resp = await fetch('/api/school/profile', {
+                    method: 'PUT', headers: getAuthHeaders(), body: JSON.stringify(body)
+                });
+                const result = await resp.json();
+                if (resp.ok) {
+                    alert("个人信息已更新");
+                    if (body.email) profileData.email = body.email;
+                    if (body.avatar) profileData.avatar = body.avatar;
+                    renderAvatar();
+                    closeProfileModal();
+                } else {
+                    alert("保存失败：" + (result.detail ?? '未知错误'));
+                }
+            } catch (e) { alert("网络错误，保存失败"); }
+        }
+
+        // ===== 站点编辑 =====
+        const editStopCoords = {};
+
+        function openEditStop(lineId, stopId) {
+            const form = document.getElementById(`edit-stop-form-${stopId}`);
+            if (!form) return;
+            const wasOpen = form.classList.contains('open');
+            // 先关闭所有编辑表单
+            document.querySelectorAll('[id^="edit-stop-form-"]').forEach(f => f.classList.remove('open'));
+            if (!wasOpen) {
+                form.classList.add('open');
+                // 绑定地址补全
+                attachEditAutocomplete(stopId);
+            }
+        }
+
+        function closeEditStop(stopId) {
+            const form = document.getElementById(`edit-stop-form-${stopId}`);
+            if (form) form.classList.remove('open');
+        }
+
+        function attachEditAutocomplete(stopId) {
+            const input = document.getElementById(`es-addr-${stopId}`);
+            if (!input || input.dataset.acBound) return;
+            input.dataset.acBound = "1";
+            const ac = new google.maps.places.Autocomplete(input);
+            ac.addListener('place_changed', () => {
+                const place = ac.getPlace();
+                if (place.geometry) {
+                    editStopCoords[stopId] = {
+                        lat: place.geometry.location.lat(),
+                        lng: place.geometry.location.lng()
+                    };
+                }
+            });
+        }
+
+        async function saveEditStop(stopId) {
+            const name = document.getElementById(`es-name-${stopId}`).value.trim();
+            const addr = document.getElementById(`es-addr-${stopId}`).value.trim();
+            const am = document.getElementById(`es-am-${stopId}`).value;
+            const pm = document.getElementById(`es-pm-${stopId}`).value;
+            if (!name) { alert("站点名称不能为空"); return; }
+
+            const coords = editStopCoords[stopId] || {};
+            const body = {
+                stop_name: name,
+                address: addr || null,
+                arrival_morning: am || null,
+                arrival_afternoon: pm || null,
+            };
+            if (coords.lat != null) { body.latitude = coords.lat; body.longitude = coords.lng; }
+
+            try {
+                const resp = await fetch(`/api/school/stops/${stopId}`, {
+                    method: 'PUT', headers: getAuthHeaders(), body: JSON.stringify(body)
+                });
+                const result = await resp.json();
+                if (resp.ok) {
+                    delete editStopCoords[stopId];
+                    await loadLines();
+                } else {
+                    alert("保存失败：" + (result.detail ?? '未知错误'));
+                }
+            } catch (e) { alert("网络错误，保存站点失败"); }
+        }
+
+        // ===== 小工具 =====
+        function escapeHtml(str) {
+            return String(str ?? '').replace(/[&<>"']/g, c =>
+                ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+        }
+        function escapeJs(str) { return String(str ?? '').replace(/['\\]/g, '\\$&'); }
+
+        // ===== 动态加载 Google Maps（含 places 库用于地址补全）=====
+        (function () {
+            if (!API_KEY || API_KEY.indexOf("在这里") !== -1) {
+                document.getElementById("map").innerHTML =
+                    '<div class="map-fallback">⚠️ 未检测到有效的 Google Maps API Key。<br>' +
+                    '请打开项目根目录的 <b>config.js</b> 填入前端 key 后刷新。</div>';
+                console.error("config.js 未提供有效的 GOOGLE_MAPS_API_KEY");
+                return;
+            }
+            const s = document.createElement('script');
+            s.src = `https://maps.googleapis.com/maps/api/js?key=${API_KEY}&libraries=places&callback=initMap`;
+            s.async = true; s.defer = true;
+            document.body.appendChild(s);
+        })();
+
+        // ===== 优化后校车线路 — 前端逻辑 =====
+        const OPT_COLORS = ["#34d399","#60a5fa","#fbbf24","#f87171","#c084fc","#fb923c","#f472b6","#38bdf8"];
+        // 同一 zone 内各站点的子色板（站点间互相区分）
+        const STOP_SUB_COLORS = [
+            ["#34d399","#059669","#6ee7b7","#a7f3d0","#065f46","#10b981","#d1fae5"],
+            ["#60a5fa","#1d4ed8","#93c5fd","#bfdbfe","#1e40af","#3b82f6","#dbeafe"],
+            ["#fbbf24","#b45309","#fcd34d","#fde68a","#78350f","#f59e0b","#fef3c7"],
+            ["#f87171","#b91c1c","#fca5a5","#fecaca","#7f1d1d","#ef4444","#fee2e2"],
+            ["#c084fc","#7e22ce","#d8b4fe","#ede9fe","#4c1d95","#a855f7","#f5f3ff"],
+            ["#fb923c","#c2410c","#fdba74","#fed7aa","#7c2d12","#f97316","#fff7ed"],
+            ["#f472b6","#be185d","#f9a8d4","#fce7f3","#831843","#ec4899","#fdf2f8"],
+            ["#38bdf8","#0369a1","#7dd3fc","#bae6fd","#0c4a6e","#0ea5e9","#e0f2fe"],
+        ];
+        let optMarkers = [];      // 学生标记
+        let optStopMarkers = [];  // 站点标记（可拖拽）
+        let optPolylines = [];    // 路线折线
+        let optStopState = {};    // 站点状态：{ stopId: {origLat, origLng, zone, modified, marker} }
+        let optZones = [];        // 当前所有分区名
+        let stopColorMap = {};    // stopId → color，供学生标记着色用
+
+        function clearOptMap() {
+            optMarkers.forEach(m => m.setMap(null));
+            optStopMarkers.forEach(m => m.setMap(null));
+            optPolylines.forEach(p => p.setMap(null));
+            optMarkers = []; optStopMarkers = []; optPolylines = [];
+        }
+
+        // 站点到学校的距离（haversine，单位米）；仅用于站点编号排序
+        function distToSchool(schoolPos, stop) {
+            const R = 6371000;
+            const toRad = d => d * Math.PI / 180;
+            const dLat = toRad(stop.latitude - schoolPos.lat);
+            const dLng = toRad(stop.longitude - schoolPos.lng);
+            const a = Math.sin(dLat / 2) ** 2 +
+                Math.cos(toRad(schoolPos.lat)) * Math.cos(toRad(stop.latitude)) * Math.sin(dLng / 2) ** 2;
+            return 2 * R * Math.asin(Math.sqrt(a));
+        }
+
+        // 反查站点坐标对应的街道地址，填入左侧列表对应行
+        function reverseGeocodeStop(stopId, lat, lng) {
+            const el = document.getElementById(`opt-stop-addr-${stopId}`);
+            if (!el || !geocoder) return;
+            geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+                if (status === 'OK' && results[0]) {
+                    el.textContent = results[0].formatted_address;
+                } else {
+                    el.textContent = `坐标 ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+                }
+            });
+        }
+
+        // --- Step 1: 文件上传 ---
+        async function handleFileUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const res = await fetch('/api/school/students/upload', {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + localStorage.getItem('access_token') },
+                    body: formData,
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || '上传失败');
+
+                document.getElementById('upload-area').style.display = 'none';
+                document.getElementById('upload-result').style.display = 'block';
+                document.getElementById('upload-count').textContent = `✅ 已导入 ${data.count} 名学生`;
+
+                const tbody = document.getElementById('student-preview-body');
+                tbody.innerHTML = '';
+                (data.students || []).forEach(s => {
+                    tbody.innerHTML += `<tr><td>${s.name}</td><td>${s.grade}</td><td>${s.address}</td></tr>`;
+                });
+
+                // 显示 Step 2
+                document.getElementById('opt-step-2').style.display = 'block';
+            } catch (err) {
+                alert('上传失败: ' + err.message);
+            }
+        }
+
+        // --- Step 2: Geocoding ---
+        async function startGeocode() {
+            const btn = document.getElementById('btn-geocode');
+            btn.disabled = true; btn.textContent = '解析中...';
+            document.getElementById('geocode-progress').style.display = 'block';
+            document.getElementById('geocode-fill').style.width = '30%';
+
+            try {
+                const res = await fetch('/api/school/students/geocode', {
+                    method: 'POST',
+                    headers: getAuthHeaders(),
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || '解析失败');
+
+                document.getElementById('geocode-fill').style.width = '100%';
+                document.getElementById('geocode-status').textContent =
+                    `✅ 成功解析 ${data.geocoded} 个地址，共 ${data.total} 名学生`;
+
+                // 显示失败列表
+                if (data.failed && data.failed.length > 0) {
+                    // 更新状态栏显示剩余未解析数
+                    const failDiv = document.getElementById('geocode-failed');
+                    failDiv.style.display = 'block';
+                    failDiv.innerHTML = `<div style="color:#f87171;font-size:12px;margin-top:8px;">⚠️ ${data.failed.length} 条地址未能解析，请手工录入。</div>`;
+                    // 弹出手工录入对话框
+                    openManualGeocodeModal(data.failed);
+                }
+
+                // 地图显示学生位置
+                await showStudentsOnMap();
+
+                // 在 Step 2 下方显示已解析学生列表
+                await renderGeocodedStudentList();
+
+                // 显示 Step 3
+                document.getElementById('opt-step-3').style.display = 'block';
+            } catch (err) {
+                alert('地址解析失败: ' + err.message);
+            } finally {
+                btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-map-location-dot"></i> 开始解析地址';
+            }
+        }
+
+        // ===== 手工录入 Geocoding 失败记录 =====
+        let manualGeocodeItems = [];   // [{student_id, name, coords: {lat,lng}|null}]
+
+        function openManualGeocodeModal(failedList) {
+            manualGeocodeItems = failedList.map(f => ({
+                student_id: f.student_id,
+                name: f.name,
+                coords: null,
+            }));
+
+            const listEl = document.getElementById('manual-geocode-list');
+            listEl.innerHTML = manualGeocodeItems.map((item, i) => `
+                <div style="margin-bottom:16px;">
+                    <div style="font-size:13px;font-weight:700;color:#e2e8f0;margin-bottom:6px;">
+                        ${escapeHtml(item.name)}
+                        <span style="color:#94a3b8;font-size:11px;font-weight:400;">（原地址无法解析）</span>
+                    </div>
+                    <input type="text" id="manual-addr-${item.student_id}"
+                        placeholder="输入正确地址（支持自动补全）…"
+                        style="width:100%;padding:8px 10px;border-radius:6px;
+                               border:1px solid rgba(255,255,255,0.15);
+                               background:rgba(255,255,255,0.05);color:#e2e8f0;font-size:13px;">
+                </div>
+            `).join('');
+
+            document.getElementById('manual-geocode-modal').classList.add('open');
+
+            // 绑定 Autocomplete（需在 DOM 插入后执行）
+            manualGeocodeItems.forEach((item) => {
+                const input = document.getElementById(`manual-addr-${item.student_id}`);
+                if (!input) return;
+                const ac = new google.maps.places.Autocomplete(input);
+                ac.addListener('place_changed', () => {
+                    const place = ac.getPlace();
+                    if (place && place.geometry) {
+                        item.coords = {
+                            lat: place.geometry.location.lat(),
+                            lng: place.geometry.location.lng(),
+                            address: place.formatted_address || input.value,
+                        };
+                    }
+                });
+            });
+        }
+
+        function closeManualGeocodeModal() {
+            document.getElementById('manual-geocode-modal').classList.remove('open');
+        }
+
+        async function submitManualGeocodes() {
+            const toSubmit = manualGeocodeItems.filter(item => item.coords);
+            if (!toSubmit.length) {
+                alert('请先在输入框中选择至少一个地址。');
+                return;
+            }
+
+            let successCount = 0;
+            for (const item of toSubmit) {
+                try {
+                    const resp = await fetch(`/api/school/students/${item.student_id}/address`, {
+                        method: 'PUT',
+                        headers: getAuthHeaders(),
+                        body: JSON.stringify({
+                            address: item.coords.address,
+                            latitude: item.coords.lat,
+                            longitude: item.coords.lng,
+                        }),
+                    });
+                    if (resp.ok) successCount++;
+                } catch (e) {
+                    console.error(`更新学生 ${item.student_id} 失败:`, e);
+                }
+            }
+
+            closeManualGeocodeModal();
+
+            // 更新状态文字
+            const remaining = manualGeocodeItems.length - successCount;
+            const failDiv = document.getElementById('geocode-failed');
+            if (remaining <= 0) {
+                failDiv.style.display = 'none';
+            } else {
+                failDiv.innerHTML = `<div style="color:#f87171;font-size:12px;margin-top:8px;">⚠️ 仍有 ${remaining} 条地址未录入。</div>`;
+            }
+
+            // 刷新地图上的学生位置点 + 已解析列表
+            await showStudentsOnMap();
+            await renderGeocodedStudentList();
+        }
+
+        // 渲染 Step 2 已解析学生列表（含序号、姓名、年级、经纬度）
+        async function renderGeocodedStudentList() {
+            try {
+                const res = await fetch('/api/school/students', { headers: getAuthHeaders() });
+                const students = await res.json();
+                const withCoords = students.filter(s => s.latitude != null && s.longitude != null);
+
+                const tbody = document.getElementById('geocode-student-body');
+                tbody.innerHTML = withCoords.map((s, i) => `
+                    <tr>
+                        <td style="text-align:center;">${i + 1}</td>
+                        <td>${escapeHtml(s.name || '—')}</td>
+                        <td style="text-align:center;">${escapeHtml(s.grade || '—')}</td>
+                        <td style="text-align:center;">${s.latitude.toFixed(6)}</td>
+                        <td style="text-align:center;">${s.longitude.toFixed(6)}</td>
+                    </tr>`).join('');
+
+                document.getElementById('geocode-result-list').style.display = 'block';
+            } catch (e) {
+                console.error('加载已解析学生列表失败:', e);
+            }
+        }
+
+        async function showStudentsOnMap() {
+            const res = await fetch('/api/school/students', { headers: getAuthHeaders() });
+            const students = await res.json();
+
+            // 只清除学生标记，保留站点标记和路线
+            optMarkers.forEach(m => m.setMap(null));
+            optMarkers = [];
+            const bounds = new google.maps.LatLngBounds();
+
+            students.forEach(s => {
+                if (!s.latitude || !s.longitude) return;
+                const pos = { lat: s.latitude, lng: s.longitude };
+
+                // 优先用已建立的 stopColorMap（站点子色板），否则退回 zone 颜色
+                let color;
+                if (s.assigned_stop_id && stopColorMap[s.assigned_stop_id]) {
+                    color = stopColorMap[s.assigned_stop_id];
+                } else {
+                    const zoneIdx = s.zone ? parseInt(s.zone.split('_')[1]) - 1 : 0;
+                    color = OPT_COLORS[zoneIdx % OPT_COLORS.length];
+                }
+
+                const marker = new google.maps.Marker({
+                    position: pos,
+                    map: map,
+                    icon: {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        scale: 5,
+                        fillColor: color,
+                        fillOpacity: 0.8,
+                        strokeWeight: 1,
+                        strokeColor: '#fff',
+                    },
+                    title: `${s.name} (${s.grade})`,
+                });
+                optMarkers.push(marker);
+                bounds.extend(pos);
+            });
+
+            if (optMarkers.length > 0) map.fitBounds(bounds);
+        }
+
+        // --- Step 3: K-Means 分区 ---
+        async function startCluster() {
+            const busCount = parseInt(document.getElementById('input-bus-count').value);
+            const busCapacity = parseInt(document.getElementById('input-bus-capacity').value);
+            const btn = document.getElementById('btn-cluster');
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('/api/school/students/cluster', {
+                    method: 'POST',
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify({ bus_count: busCount, bus_capacity: busCapacity }),
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || '分区失败');
+
+                // 显示分区结果（含学生列表）
+                const resultDiv = document.getElementById('cluster-result');
+                resultDiv.style.display = 'block';
+
+                // 按区归组学生
+                const zoneMap = {};
+                (data.students || []).forEach(s => {
+                    if (!zoneMap[s.zone]) zoneMap[s.zone] = [];
+                    zoneMap[s.zone].push(s);
+                });
+
+                // 用 data.zones 的顺序排列（已按 Zone_N 排序）
+                const sortedZones = Object.keys(data.zones).sort();
+                let html = '';
+                sortedZones.forEach((zone, idx) => {
+                    const color = OPT_COLORS[idx % OPT_COLORS.length];
+                    const count = data.zones[zone];
+                    const students = zoneMap[zone] || [];
+                    html += `<div class="zone-block">
+                        <span class="zone-tag" style="background:${color}22;color:${color};border:1px solid ${color}55;">${zone}: ${count} 人</span>
+                        <div class="zone-student-list">
+                            ${students.map(s => `<div class="zone-student-row"><span>${s.name || '—'}</span><span>Grade ${s.grade || '—'}</span></div>`).join('')}
+                        </div>
+                    </div>`;
+                });
+                resultDiv.innerHTML = html;
+
+                // 刷新地图（学生带分区颜色）
+                await showStudentsOnMap();
+
+                // 显示 Step 4
+                document.getElementById('opt-step-4').style.display = 'block';
+            } catch (err) {
+                alert('分区失败: ' + err.message);
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        // --- Step 4: 站点优化 ---
+        async function startOptimizeStops() {
+            const maxStops = parseInt(document.getElementById('input-max-stops').value);
+            const btn = document.getElementById('btn-optimize-stops');
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('/api/school/students/optimize-stops', {
+                    method: 'POST',
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify({ max_stops_per_route: maxStops }),
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || '优化失败');
+
+                // 在地图上显示站点（可拖拽）
+                optStopMarkers.forEach(m => m.setMap(null));
+                optStopMarkers = [];
+
+                const stopsDiv = document.getElementById('stops-result');
+                stopsDiv.style.display = 'block';
+
+                // 按区分组，按到学校距离从远到近编号（最远 = 1）
+                const schoolPos = (school && school.latitude != null)
+                    ? { lat: school.latitude, lng: school.longitude } : null;
+                const seqByStopId = {};
+                const byZone = {};
+                data.stops.forEach(s => { (byZone[s.zone] = byZone[s.zone] || []).push(s); });
+                Object.values(byZone).forEach(zoneStops => {
+                    if (schoolPos) {
+                        zoneStops
+                            .map(s => ({ s, d: distToSchool(schoolPos, s) }))
+                            .sort((a, b) => b.d - a.d)   // 远 → 近
+                            .forEach((item, i) => { seqByStopId[item.s.id] = i + 1; });
+                    } else {
+                        zoneStops.forEach((s, i) => { seqByStopId[s.id] = i + 1; });
+                    }
+                });
+
+                // 渲染：每个分区一组，整组左侧一条拉通竖线；组内按序号排序
+                let html = '';
+                const sortedZones = Object.keys(byZone).sort();
+                optZones = sortedZones.slice();
+                sortedZones.forEach(zone => {
+                    const zoneIdx = parseInt(zone.split('_')[1]) - 1;
+                    const color = OPT_COLORS[zoneIdx % OPT_COLORS.length];
+                    const subColors = STOP_SUB_COLORS[zoneIdx % STOP_SUB_COLORS.length];
+                    const rows = byZone[zone]
+                        .slice()
+                        .sort((a, b) => (seqByStopId[a.id] || 0) - (seqByStopId[b.id] || 0))
+                        .map(stop => {
+                            const seq = seqByStopId[stop.id] || 0;
+                            const dotColor = subColors[(seq - 1) % subColors.length];
+                            return `<div class="opt-stop-row" id="opt-stop-row-${stop.id}">
+                                <span class="num-dot" style="background:${dotColor};">${seq}</span>
+                                <div class="body">
+                                    <div class="addr" id="opt-stop-addr-${stop.id}">正在解析地址…</div>
+                                    <div class="meta">${stop.stop_name} · 第 ${seq} 站 · ${stop.student_count} 人</div>
+                                    <div class="opt-adjusted-badge" id="opt-stop-adj-${stop.id}" style="display:none;">
+                                        <i class="fa-solid fa-triangle-exclamation"></i> 已手动调整
+                                    </div>
+                                </div>
+                            </div>`;
+                        }).join('');
+                    html += `<div class="opt-zone-group" style="--zone-color:${color};">
+                        <div class="opt-zone-head">
+                            <span class="opt-zone-title" style="color:${color};">
+                                <i class="fa-solid fa-bus"></i> ${zone}
+                            </span>
+                            <span class="opt-zone-status pending" id="opt-zone-status-${zone}">待确认</span>
+                        </div>
+                        ${rows}
+                    </div>`;
+                });
+
+                // 重置站点状态表 & 颜色映射
+                optStopState = {};
+                stopColorMap = {};
+
+                data.stops.forEach((stop, idx) => {
+                    const zoneIdx = parseInt(stop.zone.split('_')[1]) - 1;
+                    const subColors = STOP_SUB_COLORS[zoneIdx % STOP_SUB_COLORS.length];
+                    // 同一 zone 内按 seq 排的子色板索引
+                    const seq = seqByStopId[stop.id] || (idx + 1);
+                    const stopColor = subColors[(seq - 1) % subColors.length];
+                    stopColorMap[stop.id] = stopColor;
+
+                    const marker = new google.maps.Marker({
+                        position: { lat: stop.latitude, lng: stop.longitude },
+                        map: map,
+                        draggable: true,
+                        icon: {
+                            path: google.maps.SymbolPath.CIRCLE,
+                            scale: 13,
+                            fillColor: stopColor,
+                            fillOpacity: 1,
+                            strokeWeight: 2,
+                            strokeColor: '#fff',
+                        },
+                        title: `${stop.stop_name} · 第 ${seq} 站 · ${stop.student_count} 人`,
+                        label: { text: String(seq), color: '#fff', fontSize: '12px', fontWeight: 'bold' },
+                        zIndex: 5,
+                    });
+
+                    // 记录原始坐标，用于「重置站点位置」
+                    optStopState[stop.id] = {
+                        origLat: stop.latitude, origLng: stop.longitude,
+                        zone: stop.zone, modified: false, marker,
+                    };
+
+                    // 拖拽结束后：保存新位置 → 反查新地址 → 标注「已手动调整」→ 联动按钮/徽章
+                    marker.addListener('dragend', async () => {
+                        const pos = marker.getPosition();
+                        const lat = pos.lat(), lng = pos.lng();
+                        await fetch('/api/school/students/update-stop-position', {
+                            method: 'PUT',
+                            headers: getAuthHeaders(),
+                            body: JSON.stringify({ stop_id: stop.id, latitude: lat, longitude: lng }),
+                        });
+                        reverseGeocodeStop(stop.id, lat, lng);
+                        markStopModified(stop.id, stop.zone);
+                    });
+
+                    optStopMarkers.push(marker);
+                });
+
+                stopsDiv.innerHTML = html;
+                document.getElementById('stops-actions').style.display = 'block';
+                resetStopButtons();
+                // 初始计算完成后，确认按钮立即可用（无需等待手动拖拽）
+                document.getElementById('btn-confirm-stops').disabled = false;
+
+                // 列表已进 DOM，逐个反查地址（错开请求，避免触发 Geocoder 速率限制）
+                data.stops.forEach((stop, i) => {
+                    setTimeout(() => reverseGeocodeStop(stop.id, stop.latitude, stop.longitude), i * 250);
+                });
+
+                // stopColorMap 已建立，刷新学生标记颜色（按分配站点着色）
+                await showStudentsOnMap();
+
+                // 显示 Step 5
+                document.getElementById('opt-step-5').style.display = 'block';
+            } catch (err) {
+                alert('站点优化失败: ' + err.message);
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        // 站点被手动拖拽：标注「已手动调整」+ 该区徽章「待确认」+ 启用确认按钮 + 清除已绘路线
+        function markStopModified(stopId, zone) {
+            if (optStopState[stopId]) optStopState[stopId].modified = true;
+
+            const badge = document.getElementById(`opt-stop-adj-${stopId}`);
+            if (badge) badge.style.display = 'block';
+
+            // 该区状态回到「待确认」
+            const zoneStatus = document.getElementById(`opt-zone-status-${zone}`);
+            if (zoneStatus) {
+                zoneStatus.textContent = '待确认';
+                zoneStatus.classList.remove('optimized');
+                zoneStatus.classList.add('pending');
+            }
+
+            // 确认按钮恢复可按，同时生成路线按钮重新锁定
+            const confirmBtn = document.getElementById('btn-confirm-stops');
+            confirmBtn.disabled = false;
+            confirmBtn.classList.remove('done');
+            confirmBtn.innerHTML = '<i class="fa-solid fa-check"></i> 确认站点位置';
+            document.getElementById('btn-gen-opt-routes').disabled = true;
+
+            // 站点变动后，之前画的优化路线已失效，清除
+            optPolylines.forEach(p => p.setMap(null));
+            optPolylines = [];
+        }
+
+        // 初始/重算后：确认按钮禁用、所有区「待确认」
+        function resetStopButtons() {
+            const confirmBtn = document.getElementById('btn-confirm-stops');
+            confirmBtn.disabled = true;
+            confirmBtn.classList.remove('done');
+            confirmBtn.innerHTML = '<i class="fa-solid fa-check"></i> 确认站点位置';
+            optZones.forEach(zone => {
+                const st = document.getElementById(`opt-zone-status-${zone}`);
+                if (st) { st.textContent = '待确认'; st.classList.remove('optimized'); st.classList.add('pending'); }
+            });
+            // 确认按钮未点击时，生成路线按钮不可用
+            document.getElementById('btn-gen-opt-routes').disabled = true;
+        }
+
+        // 确认站点位置：所有区徽章→「已确认」，按钮禁用并显示「站点已优化」，生成路线按钮解锁
+        function confirmStops() {
+            optZones.forEach(zone => {
+                const st = document.getElementById(`opt-zone-status-${zone}`);
+                if (st) { st.textContent = '已确认'; st.classList.remove('pending'); st.classList.add('optimized'); }
+            });
+            const confirmBtn = document.getElementById('btn-confirm-stops');
+            confirmBtn.disabled = true;
+            confirmBtn.classList.add('done');
+            confirmBtn.innerHTML = '<i class="fa-solid fa-circle-check"></i> 站点已优化';
+            // 站点已确认，解锁生成路线按钮
+            document.getElementById('btn-gen-opt-routes').disabled = false;
+        }
+
+        // 重置站点位置：把所有手动调整过的站点恢复到算法原始坐标
+        async function resetStops() {
+            const modifiedIds = Object.keys(optStopState).filter(id => optStopState[id].modified);
+            if (!modifiedIds.length) { alert('没有手动调整过的站点。'); return; }
+            if (!confirm('确认把所有手动调整过的站点恢复到算法原始位置？调整记录将被清除。')) return;
+
+            for (const id of modifiedIds) {
+                const st = optStopState[id];
+                // 地图标记复位
+                st.marker.setPosition({ lat: st.origLat, lng: st.origLng });
+                // 后端持久化复位
+                await fetch('/api/school/students/update-stop-position', {
+                    method: 'PUT',
+                    headers: getAuthHeaders(),
+                    body: JSON.stringify({ stop_id: parseInt(id), latitude: st.origLat, longitude: st.origLng }),
+                });
+                // 反查地址回填
+                reverseGeocodeStop(id, st.origLat, st.origLng);
+                // 隐藏「已手动调整」
+                const badge = document.getElementById(`opt-stop-adj-${id}`);
+                if (badge) badge.style.display = 'none';
+                st.modified = false;
+            }
+
+            // 路线失效，按钮/徽章回到初始
+            optPolylines.forEach(p => p.setMap(null));
+            optPolylines = [];
+            resetStopButtons();
+            // 重置后站点已回到算法位置，确认按钮应可用
+            document.getElementById('btn-confirm-stops').disabled = false;
+        }
+
+        // --- Step 5: 生成优化路线 ---
+        async function startGenerateRoutes() {
+            const btn = document.getElementById('btn-gen-opt-routes');
+            btn.disabled = true; btn.textContent = '正在计算路线...';
+
+            try {
+                const res = await fetch('/api/school/students/generate-routes', {
+                    method: 'POST',
+                    headers: getAuthHeaders(),
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || '生成失败');
+
+                // 初始化 DirectionsService（如尚未初始化）
+                if (!directionsService) {
+                    directionsService = new google.maps.DirectionsService();
+                }
+
+                // 清除旧路线
+                optPolylines.forEach(p => p.setMap(null));
+                optPolylines = [];
+
+                const morningEntries   = Object.entries(data.routes.morning);
+                const afternoonEntries = Object.entries(data.routes.afternoon);
+
+                // 并发绘制早上（实线）和下午（虚线）路线
+                const [morningResults, afternoonResults] = await Promise.all([
+                    Promise.all(morningEntries.map(([zone, stops], idx) => {
+                        const color = OPT_COLORS[idx % OPT_COLORS.length];
+                        const pts = stops.map(s => ({ lat: s.lat, lng: s.lng }));
+                        if (pts.length < 2) return Promise.resolve(null);
+                        return drawOptRoute(pts, color, false);
+                    })),
+                    Promise.all(afternoonEntries.map(([zone, stops], idx) => {
+                        const color = OPT_COLORS[idx % OPT_COLORS.length];
+                        const pts = stops.map(s => ({ lat: s.lat, lng: s.lng }));
+                        if (pts.length < 2) return Promise.resolve(null);
+                        return drawOptRoute(pts, color, true);
+                    }))
+                ]);
+
+                // 构建早上 metrics（始终用后端含路况数据，Directions 仅用于绘图）
+                const morningMetrics = {};
+                let grandKmM = 0, grandMinM = 0;
+                morningEntries.forEach(([zone], i) => {
+                    const backend = data.metrics.morning[zone] || {};
+                    morningMetrics[zone] = {
+                        num_stops: backend.num_stops,
+                        total_km: backend.total_km || 0,
+                        total_minutes: backend.total_minutes || 0,
+                        estimated: false,
+                    };
+                    grandKmM += backend.total_km || 0;
+                    grandMinM += backend.total_minutes || 0;
+                });
+                morningMetrics.grand_total = {
+                    total_km: +grandKmM.toFixed(2),
+                    total_minutes: +grandMinM.toFixed(1),
+                };
+
+                // 构建下午 metrics（始终用后端含路况数据，Directions 仅用于绘图）
+                const afternoonMetrics = {};
+                let grandKmA = 0, grandMinA = 0;
+                afternoonEntries.forEach(([zone], i) => {
+                    const backend = data.metrics.afternoon[zone] || {};
+                    afternoonMetrics[zone] = {
+                        num_stops: backend.num_stops,
+                        total_km: backend.total_km || 0,
+                        total_minutes: backend.total_minutes || 0,
+                        estimated: false,
+                    };
+                    grandKmA += backend.total_km || 0;
+                    grandMinA += backend.total_minutes || 0;
+                });
+                afternoonMetrics.grand_total = {
+                    total_km: +grandKmA.toFixed(2),
+                    total_minutes: +grandMinA.toFixed(1),
+                };
+
+                // 显示 Step 6 对比分析
+                showComparison(morningMetrics, afternoonMetrics);
+                document.getElementById('opt-step-6').style.display = 'block';
+
+            } catch (err) {
+                alert('路线生成失败: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-route"></i> 生成优化后校车线路';
+            }
+        }
+
+        // 用 Directions API 沿实际街道绘制一条优化路线；失败则降级为直线
+        // 返回 Promise，resolve 出 {km, minutes}（来自 Directions 真实数据）；降级时 resolve null
+        function drawOptRoute(pts, color, dashed) {
+            // Directions 单次最多 25 个点（含起终点）。超限直接降级直线。
+            if (pts.length > 25) {
+                drawOptStraightLine(pts, color);
+                return Promise.resolve(null);
+            }
+            return _doDirectionsRequest(pts, color, false, dashed);
+        }
+
+        // 内部：发起 Directions 请求；useAddress=true 时用反查地址字符串替代坐标（解决封闭社区 ROOFTOP 问题）
+        function _doDirectionsRequest(pts, color, useAddress, dashed) {
+            return new Promise(resolve => {
+                const buildRequest = (resolvedPts) => {
+                    const origin = resolvedPts[0];
+                    const destination = resolvedPts[resolvedPts.length - 1];
+                    const waypoints = resolvedPts.slice(1, -1).map(p => ({ location: p, stopover: true }));
+                    directionsService.route({
+                        origin, destination, waypoints,
+                        optimizeWaypoints: false,
+                        travelMode: google.maps.TravelMode.DRIVING,
+                    }, (result, status) => {
+                        if (status === google.maps.DirectionsStatus.OK) {
+                            let polyline;
+                            if (dashed) {
+                                polyline = new google.maps.Polyline({
+                                    path: result.routes[0].overview_path,
+                                    strokeColor: color,
+                                    strokeOpacity: 0,
+                                    strokeWeight: 3,
+                                    map: map,
+                                    icons: [{
+                                        icon: { path: 'M 0,-1 0,1', strokeOpacity: 0.85, strokeColor: color, scale: 3 },
+                                        offset: '0', repeat: '12px'
+                                    }]
+                                });
+                            } else {
+                                polyline = new google.maps.Polyline({
+                                    path: result.routes[0].overview_path,
+                                    strokeColor: color,
+                                    strokeOpacity: 0.9,
+                                    strokeWeight: 4,
+                                    map: map,
+                                });
+                            }
+                            optPolylines.push(polyline);
+                            let meters = 0, seconds = 0;
+                            result.routes[0].legs.forEach(leg => {
+                                meters += leg.distance.value;
+                                seconds += leg.duration.value;
+                            });
+                            resolve({ km: meters / 1000, minutes: seconds / 60 });
+                        } else if (!useAddress && (status === 'ZERO_RESULTS' || status === 'NOT_FOUND')) {
+                            // 坐标落在封闭社区/不可达点，反查地址字符串后重试一次
+                            console.warn('Directions 坐标路由失败(' + status + ')，尝试用地址字符串重试…');
+                            _reverseGeocodeAll(pts).then(addrPts => {
+                                _doDirectionsRequest(addrPts, color, true, dashed).then(resolve);
+                            });
+                        } else {
+                            console.warn('优化路线 Directions 失败，降级直线: ' + status);
+                            drawOptStraightLine(pts, color);
+                            resolve(null);
+                        }
+                    });
+                };
+                buildRequest(pts);
+            });
+        }
+
+        // 把 [{lat,lng}, ...] 批量反查为地址字符串数组（供 Directions waypoint 使用）
+        function _reverseGeocodeAll(pts) {
+            return Promise.all(pts.map((p, i) =>
+                new Promise(resolve => {
+                    // 起点（最远站）和终点（学校）保持坐标；只对中间 waypoints 也反查，全部反查更保险
+                    geocoder.geocode({ location: { lat: p.lat, lng: p.lng } }, (results, status) => {
+                        if (status === 'OK' && results[0]) {
+                            resolve(results[0].formatted_address);
+                        } else {
+                            resolve({ lat: p.lat, lng: p.lng }); // 反查失败，保留原坐标
+                        }
+                    });
+                })
+            ));
+        }
+
+        // 降级：直线连接（虚线，提示非实际道路）
+        function drawOptStraightLine(pts, color) {
+            const polyline = new google.maps.Polyline({
+                path: pts,
+                strokeColor: color,
+                strokeOpacity: 0,
+                strokeWeight: 3,
+                map: map,
+                icons: [{
+                    icon: { path: 'M 0,-1 0,1', strokeOpacity: 0.6, strokeColor: color, scale: 3 },
+                    offset: '0', repeat: '12px'
+                }]
+            });
+            optPolylines.push(polyline);
+        }
+
+        // --- Step 6: 对比分析 ---
+        function showComparison(morningMetrics, afternoonMetrics) {
+            const div = document.getElementById('comparison-result');
+            const zones = Object.keys(morningMetrics).filter(z => z !== 'grand_total');
+
+            let html = `<div class="compare-card">
+                <h4><i class="fa-solid fa-chart-column"></i> 优化路线统计</h4>
+                <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                    <thead>
+                        <tr>
+                            <th style="text-align:left;padding:6px 4px;color:#94a3b8;font-weight:600;border-bottom:1px solid rgba(255,255,255,0.1);">线路</th>
+                            <th style="text-align:right;padding:6px 4px;color:#fbbf24;font-weight:600;border-bottom:1px solid rgba(255,255,255,0.1);">🌅 早上上学（实线）</th>
+                            <th style="text-align:right;padding:6px 4px;color:#60a5fa;font-weight:600;border-bottom:1px solid rgba(255,255,255,0.1);">🌆 下午放学（虚线）</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
+
+            zones.forEach(zone => {
+                const m = morningMetrics[zone]   || {};
+                const a = afternoonMetrics[zone] || {};
+                const mFlag = m.estimated ? ' <span style="color:#fbbf24;font-size:10px;">(估算)</span>' : '';
+                const aFlag = a.estimated ? ' <span style="color:#fbbf24;font-size:10px;">(估算)</span>' : '';
+                html += `<tr>
+                    <td style="padding:6px 4px;color:#e2e8f0;">${zone} (${m.num_stops || a.num_stops || 0} 站)</td>
+                    <td style="text-align:right;padding:6px 4px;color:#fbbf24;">${m.total_km} km / ${m.total_minutes} min${mFlag}</td>
+                    <td style="text-align:right;padding:6px 4px;color:#60a5fa;">${a.total_km} km / ${a.total_minutes} min${aFlag}</td>
+                </tr>`;
+            });
+
+            const mg = morningMetrics.grand_total   || {};
+            const ag = afternoonMetrics.grand_total || {};
+            html += `</tbody>
+                </table>
+            </div>`;
+
+            div.innerHTML = html;
+        }
+
+        // --- 清空学生数据 ---
+        async function clearStudents() {
+            if (!confirm('确定清空所有学生和优化数据？此操作不可恢复。')) return;
+
+            await fetch('/api/school/students/clear', {
+                method: 'DELETE',
+                headers: getAuthHeaders(),
+            });
+
+            // 重置 UI
+            clearOptMap();
+            document.getElementById('upload-area').style.display = '';
+            document.getElementById('upload-result').style.display = 'none';
+            document.getElementById('student-file-input').value = '';
+            for (let i = 2; i <= 6; i++) {
+                document.getElementById(`opt-step-${i}`).style.display = 'none';
+            }
+            document.getElementById('geocode-progress').style.display = 'none';
+            document.getElementById('geocode-failed').style.display = 'none';
+            document.getElementById('cluster-result').style.display = 'none';
+            document.getElementById('stops-result').style.display = 'none';
+            document.getElementById('stops-actions').style.display = 'none';
+        }
+
+        // --- 切换到优化 tab 时检查已有数据状态（在新 switchMode 里直接调用）---
+        const _origSwitchMode = switchMode;
+        switchMode = function(mode) {
+            _origSwitchMode(mode);
+            if (mode === 'optimized') {
+                checkOptimizedState();
+            }
+        };
+
+        async function checkOptimizedState() {
+            try {
+                const res = await fetch('/api/school/students', { headers: getAuthHeaders() });
+                const students = await res.json();
+                if (students.length > 0) {
+                    document.getElementById('upload-area').style.display = 'none';
+                    document.getElementById('upload-result').style.display = 'block';
+                    document.getElementById('upload-count').textContent = `✅ 已导入 ${students.length} 名学生`;
+                    const tbody = document.getElementById('student-preview-body');
+                    tbody.innerHTML = '';
+                    students.forEach(s => {
+                        tbody.innerHTML += `<tr><td>${s.name}</td><td>${s.grade}</td><td>${s.address}</td></tr>`;
+                    });
+                    if (students.length > 5) tbody.innerHTML += `<tr><td colspan="3" style="color:#94a3b8;">... 共 ${students.length} 条</td></tr>`;
+
+                    document.getElementById('opt-step-2').style.display = 'block';
+
+                    const hasCoords = students.some(s => s.latitude);
+                    if (hasCoords) {
+                        document.getElementById('geocode-progress').style.display = 'block';
+                        document.getElementById('geocode-fill').style.width = '100%';
+                        document.getElementById('geocode-status').textContent = '✅ 地址已解析';
+                        document.getElementById('opt-step-3').style.display = 'block';
+                        await showStudentsOnMap();
+                    }
+
+                    const hasZone = students.some(s => s.zone);
+                    if (hasZone) {
+                        document.getElementById('opt-step-4').style.display = 'block';
+                    }
+                }
+            } catch (e) { /* ignore */ }
+        }
+    </script>
+</body>
+</html>

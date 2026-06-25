@@ -1,0 +1,146 @@
+{
+  "_comment": "Oxbridge Academy 2025-2026 实际校车路线 (来源: OABusRoutes25-26.pdf, Updated 9/2/25)。stops 按上午接送顺序排列；早上路线为 stop1->...->Oxbridge Academy，下午为反向。distance/duration 由前端 Google Directions API 实时计算。",
+  "school": {
+    "name": "Oxbridge Academy",
+    "address": "3500 Investment Ln, West Palm Beach, FL 33404",
+    "lat": 26.7153,
+    "lng": -80.1147
+  },
+  "routes": {
+    "North": {
+      "label": "Rose Gold - North",
+      "color": "#f43f5e",
+      "morning_window": "6:30 AM - 8:00 AM",
+      "afternoon_window": "3:25 PM - 5:19 PM",
+      "school_arrive_am": "8:00 AM",
+      "school_depart_pm": "3:25 PM",
+      "stops": [
+        {
+          "order": 1,
+          "name": "Publix at Chasewood Plaza",
+          "address": "6330 W Indiantown Rd, Jupiter, FL 33458",
+          "departure_am": "6:30 AM",
+          "dropoff_pm": "5:04 PM"
+        },
+        {
+          "order": 2,
+          "name": "The Fresh Market",
+          "address": "311 E Indiantown Rd, Jupiter, FL 33477",
+          "departure_am": "6:41 AM",
+          "dropoff_pm": "5:19 PM"
+        },
+        {
+          "order": 3,
+          "name": "Publix at Abacoa",
+          "address": "5500 Military Trl Ste 25, Jupiter, FL 33458",
+          "departure_am": "6:53 AM",
+          "dropoff_pm": "4:27 PM"
+        },
+        {
+          "order": 4,
+          "name": "Publix at Alton Town Center",
+          "address": "5410 Donald Ross Rd, Palm Beach Gardens, FL 33418",
+          "departure_am": "7:02 AM",
+          "dropoff_pm": "4:45 PM"
+        },
+        {
+          "order": 5,
+          "name": "Publix at Mirasol Walk",
+          "address": "6251 PGA Blvd, Palm Beach Gardens, FL 33418",
+          "departure_am": "7:15 AM",
+          "dropoff_pm": "4:10 PM"
+        },
+        {
+          "order": 6,
+          "name": "PGA Tour Superstore",
+          "address": "3198 PGA Blvd, Palm Beach Gardens, FL 33410",
+          "departure_am": "7:28 AM",
+          "dropoff_pm": "3:56 PM"
+        },
+        {
+          "order": 7,
+          "name": "Inn of America (Behind BP Station)",
+          "address": "4155 Northlake Blvd, Palm Beach Gardens, FL 33410",
+          "departure_am": "7:36 AM",
+          "dropoff_pm": "3:41 PM"
+        }
+      ]
+    },
+    "South": {
+      "label": "White Gold - South",
+      "color": "#e2e8f0",
+      "morning_window": "6:35 AM - 7:55 AM",
+      "afternoon_window": "3:25 PM - 4:43 PM",
+      "school_arrive_am": "7:55 AM",
+      "school_depart_pm": "3:25 PM",
+      "stops": [
+        {
+          "order": 1,
+          "name": "Home Depot Off of Woolbright",
+          "address": "1500 SW 8th St, Boynton Beach, FL 33426",
+          "departure_am": "6:35 AM",
+          "dropoff_pm": "4:43 PM"
+        },
+        {
+          "order": 2,
+          "name": "Publix at Town Commons",
+          "address": "8899 Hypoluxo Rd, Lake Worth, FL 33467",
+          "departure_am": "6:58 AM",
+          "dropoff_pm": "4:20 PM"
+        },
+        {
+          "order": 3,
+          "name": "Publix at Woods Walk Plaza",
+          "address": "9855 Lake Worth Rd, Lake Worth, FL 33467",
+          "departure_am": "7:10 AM",
+          "dropoff_pm": "4:07 PM"
+        },
+        {
+          "order": 4,
+          "name": "Olympia North Entrance Before the Gate",
+          "address": "2151 Olympia Blvd, Wellington, FL 33414",
+          "departure_am": "7:21 AM",
+          "dropoff_pm": "3:51 PM"
+        }
+      ]
+    },
+    "West": {
+      "label": "Yellow Gold - West",
+      "color": "#fbbf24",
+      "morning_window": "6:45 AM - 8:05 AM",
+      "afternoon_window": "3:25 PM - 4:45 PM",
+      "school_arrive_am": "8:05 AM",
+      "school_depart_pm": "3:25 PM",
+      "stops": [
+        {
+          "order": 1,
+          "name": "PNC Bank",
+          "address": "12850 Forest Hill Blvd, Wellington, FL 33414",
+          "departure_am": "6:45 AM",
+          "dropoff_pm": "4:21 PM"
+        },
+        {
+          "order": 2,
+          "name": "CVS Pharmacy",
+          "address": "1101 Royal Palm Beach Blvd, Royal Palm Beach, FL 33411",
+          "departure_am": "7:00 AM",
+          "dropoff_pm": "4:32 PM"
+        },
+        {
+          "order": 3,
+          "name": "Shoppes at Andros Isle",
+          "address": "8983 Okeechobee Blvd, West Palm Beach, FL 33411",
+          "departure_am": "7:17 AM",
+          "dropoff_pm": "4:45 PM"
+        },
+        {
+          "order": 4,
+          "name": "WPB Tri-Rail Station",
+          "address": "203 S Tamarind Ave, West Palm Beach, FL 33401",
+          "departure_am": "7:32 AM",
+          "dropoff_pm": "3:42 PM"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,79 @@
+[
+    {
+        "stop_id": "Zone_1_Stop_2",
+        "zone": "Zone_1",
+        "lat": 26.844293,
+        "lng": -80.133079,
+        "student_count": 6
+    },
+    {
+        "stop_id": "Zone_1_Stop_1",
+        "zone": "Zone_1",
+        "lat": 26.908061,
+        "lng": -80.082985,
+        "student_count": 12
+    },
+    {
+        "stop_id": "Zone_1_Stop_3",
+        "zone": "Zone_1",
+        "lat": 26.779074,
+        "lng": -80.111059,
+        "student_count": 11
+    },
+    {
+        "stop_id": "Zone_2_Stop_2",
+        "zone": "Zone_2",
+        "lat": 26.581096,
+        "lng": -80.080259,
+        "student_count": 7
+    },
+    {
+        "stop_id": "Zone_2_Stop_4",
+        "zone": "Zone_2",
+        "lat": 26.632957,
+        "lng": -80.074495,
+        "student_count": 11
+    },
+    {
+        "stop_id": "Zone_2_Stop_1",
+        "zone": "Zone_2",
+        "lat": 26.513771,
+        "lng": -80.10942,
+        "student_count": 10
+    },
+    {
+        "stop_id": "Zone_2_Stop_3",
+        "zone": "Zone_2",
+        "lat": 26.613293,
+        "lng": -80.132016,
+        "student_count": 9
+    },
+    {
+        "stop_id": "Zone_3_Stop_4",
+        "zone": "Zone_3",
+        "lat": 26.731076,
+        "lng": -80.079596,
+        "student_count": 7
+    },
+    {
+        "stop_id": "Zone_3_Stop_3",
+        "zone": "Zone_3",
+        "lat": 26.678311,
+        "lng": -80.146713,
+        "student_count": 8
+    },
+    {
+        "stop_id": "Zone_3_Stop_1",
+        "zone": "Zone_3",
+        "lat": 26.66233,
+        "lng": -80.235719,
+        "student_count": 10
+    },
+    {
+        "stop_id": "Zone_3_Stop_2",
+        "zone": "Zone_3",
+        "lat": 26.694697,
+        "lng": -80.201622,
+        "student_count": 9
+    }
+]

@@ -1,0 +1,602 @@
+[
+    {
+        "student_id": "STU_001",
+        "lat": 26.621214,
+        "lng": -80.214679,
+        "zone": "Zone_3"
+    },
+    {
+        "student_id": "STU_002",
+        "lat": 26.846398,
+        "lng": -80.11854,
+        "zone": "Zone_1"
+    },
+    {
+        "student_id": "STU_003",
+        "lat": 26.692898,
+        "lng": -80.255683,
+        "zone": "Zone_3"
+    },
+    {
+        "student_id": "STU_004",
+        "lat": 26.593695,
+        "lng": -80.154865,
+        "zone": "Zone_2"
+    },
+    {
+        "student_id": "STU_005",
+        "lat": 26.804144,
+        "lng": -80.146472,
+        "zone": "Zone_1"
+    },
+    {
+        "student_id": "STU_006",
+        "lat": 26.594575,
+        "lng": -80.137076,
+        "zone": "Zone_2"
+    },
+    {
+        "student_id": "STU_007",
+        "lat": 26.653042,
+        "lng": -80.229038,
+        "zone": "Zone_3"
+    },
+    {
+        "student_id": "STU_008",
+        "lat": 26.880879,
+        "lng": -80.107297,
+        "zone": "Zone_1"
+    },
+    {
+        "student_id": "STU_009",
+        "lat": 26.748679,
+        "lng": -80.055699,
+        "zone": "Zone_3"
+    },
+    {
+        "student_id": "STU_010",
+        "lat": 26.671725,
+        "lng": -80.144967,
+        "zone": "Zone_3"
+    },
+    {
+        "student_id": "STU_011",
+        "lat": 26.667648,
+        "lng": -80.217585,
+        "zone": "Zone_3"
+    },
+    {
+        "student_id": "STU_012",
+        "lat": 26.617285,
+        "lng": -80.063429,
+        "zone": "Zone_2"
+    },
+    {
+        "student_id": "STU_013",
+        "lat": 26.803241,
+        "lng": -80.132864,
+        "zone": "Zone_1"
+    },
+    {
+        "student_id": "STU_014",
+        "lat": 26.570516,
+        "lng": -80.107425,
+        "zone": "Zone_2"
+    },
+    {
+        "student_id": "STU_015",
+        "lat": 26.758791,
+        "lng": -80.116862,
+        "zone": "Zone_1"
+    },
+    {
+        "student_id": "STU_016",
+        "lat": 26.898312,
+        "lng": -80.097488,
+        "zone": "Zone_1"
+    },
+    {
+        "student_id": "STU_017",
+        "lat": 26.640941,
+        "lng": -80.205239,
+        "zone": "Zone_3"
+    },
+    {
+        "student_id": "STU_018",
+        "lat": 26.58996,
+        "lng": -80.062103,
+        "zone": "Zone_2"
+    },
+    {
+        "student_id": "STU_019",
+        "lat": 26.772278,
+        "lng": -80.071662,
+        "zone": "Zone_1"
+    },
+    {
+        "student_id": "STU_020",
+        "lat": 26.681907,
+        "lng": -80.215504,
+        "zone": "Zone_3"
+    },
+    {
+        "student_id": "STU_021",
+        "lat": 26.540509,
+        "lng": -80.128981,
+        "zone": "Zone_2"
+    },
+    {
+        "student_id": "STU_022",
+        "lat": 26.960886,
+        "lng": -80.079515,
+        "zone": "Zone_1"
+    },
+    {
+        "student_id": "STU_023",
+        "lat": 26.492603,
+        "lng": -80.109207,
+        "zone": "Zone_2"
+    },
+    {
+        "student_id": "STU_024",
+        "lat": 26.819675,
+        "lng": -80.148162,
+        "zone": "Zone_1"
+    },
+    {
+        "student_id": "STU_025",
+        "lat": 26.617211,
+        "lng": -80.126116,
+        "zone": "Zone_2"
+    },
+    {
+        "student_id": "STU_026",
+        "lat": 26.708417,
+        "lng": -80.059791,
+        "zone": "Zone_3"
+    },
+    {
+        "student_id": "STU_027",
+        "lat": 26.932362,
+        "lng": -80.07745,
+        "zone": "Zone_1"
+    },
+    {
+        "student_id": "STU_028",
+        "lat": 26.632641,
+        "lng": -80.126543,
+        "zone": "Zone_2"
+    },
+    {
+        "student_id": "STU_029",
+        "lat": 26.859105,
+        "lng": -80.147652,
+        "zone": "Zone_1"
+    },
+    {
+        "student_id": "STU_030",
+        "lat": 26.496505,
+        "lng": -80.065031,
+        "zone": "Zone_2"
+    },
+    {
+        "student_id": "STU_031",
+        "lat": 26.915816,
+        "lng": -80.085687,
+        "zone": "Zone_1"
+    },
+    {
+        "student_id": "STU_032",
+        "lat": 26.637067,
+        "lng": -80.24972,
+        "zone": "Zone_3"
+    },
+    {
+        "student_id": "STU_033",
+        "lat": 26.520776,
+        "lng": -80.100752,
+        "zone": "Zone_2"
+    },
+    {
+        "student_id": "STU_034",
+        "lat": 26.616348,
+        "lng": -80.077044,
+        "zone": "Zone_2"
+    },
+    {
+        "student_id": "STU_035",
+        "lat": 26.693491,
+        "lng": -80.217099,
+        "zone": "Zone_3"
+    },
+    {
+        "student_id": "STU_036",
+        "lat": 26.750176,
+        "lng": -80.107255,
+        "zone": "Zone_1"
+    },
+    {
+        "student_id": "STU_037",
+        "lat": 26.700793,
+        "lng": -80.152274,
+        "zone": "Zone_3"
+    },
+    {
+        "student_id": "STU_038",
+        "lat": 26.651986,
+        "lng": -80.137279,
+        "zone": "Zone_3"
+    },
+    {
+        "student_id": "STU_039",
+        "lat": 26.521645,
+        "lng": -80.128206,
+        "zone": "Zone_2"
+    },
+    {
+        "student_id": "STU_040",
+        "lat": 26.598724,
+        "lng": -80.070051,
+        "zone": "Zone_2"
+    },
+    {
+        "student_id": "STU_041",
+        "lat": 26.603146,
+        "lng": -80.120177,
+        "zone": "Zone_2"
+    },
+    {
+        "student_id": "STU_042",
+        "lat": 26.717663,
+        "lng": -80.095661,
+        "zone": "Zone_3"
+    },
+    {
+        "student_id": "STU_043",
+        "lat": 26.693706,
+        "lng": -80.162991,
+        "zone": "Zone_3"
+    },
+    {
+        "student_id": "STU_044",
+        "lat": 26.842789,
+        "lng": -80.119247,
+        "zone": "Zone_1"
+    },
+    {
+        "student_id": "STU_045",
+        "lat": 26.683479,
+        "lng": -80.190068,
+        "zone": "Zone_3"
+    },
+    {
+        "student_id": "STU_046",
+        "lat": 26.692878,
+        "lng": -80.202948,
+        "zone": "Zone_3"
+    },
+    {
+        "student_id": "STU_047",
+        "lat": 26.608906,
+        "lng": -80.066268,
+        "zone": "Zone_2"
+    },
+    {
+        "student_id": "STU_048",
+        "lat": 26.703248,
+        "lng": -80.079394,
+        "zone": "Zone_3"
+    },
+    {
+        "student_id": "STU_049",
+        "lat": 26.97465,
+        "lng": -80.084762,
+        "zone": "Zone_1"
+    },
+    {
+        "student_id": "STU_050",
+        "lat": 26.682708,
+        "lng": -80.249569,
+        "zone": "Zone_3"
+    },
+    {
+        "student_id": "STU_051",
+        "lat": 26.671939,
+        "lng": -80.053115,
+        "zone": "Zone_2"
+    },
+    {
+        "student_id": "STU_052",
+        "lat": 26.616419,
+        "lng": -80.095777,
+        "zone": "Zone_2"
+    },
+    {
+        "student_id": "STU_053",
+        "lat": 26.709044,
+        "lng": -80.172322,
+        "zone": "Zone_3"
+    },
+    {
+        "student_id": "STU_054",
+        "lat": 26.758215,
+        "lng": -80.109697,
+        "zone": "Zone_1"
+    },
+    {
+        "student_id": "STU_055",
+        "lat": 26.751591,
+        "lng": -80.103429,
+        "zone": "Zone_1"
+    },
+    {
+        "student_id": "STU_056",
+        "lat": 26.514897,
+        "lng": -80.138154,
+        "zone": "Zone_2"
+    },
+    {
+        "student_id": "STU_057",
+        "lat": 26.732391,
+        "lng": -80.081223,
+        "zone": "Zone_3"
+    },
+    {
+        "student_id": "STU_058",
+        "lat": 26.563827,
+        "lng": -80.058315,
+        "zone": "Zone_2"
+    },
+    {
+        "student_id": "STU_059",
+        "lat": 26.777377,
+        "lng": -80.118855,
+        "zone": "Zone_1"
+    },
+    {
+        "student_id": "STU_060",
+        "lat": 26.777125,
+        "lng": -80.130691,
+        "zone": "Zone_1"
+    },
+    {
+        "student_id": "STU_061",
+        "lat": 26.691582,
+        "lng": -80.138261,
+        "zone": "Zone_3"
+    },
+    {
+        "student_id": "STU_062",
+        "lat": 26.742118,
+        "lng": -80.063842,
+        "zone": "Zone_3"
+    },
+    {
+        "student_id": "STU_063",
+        "lat": 26.586678,
+        "lng": -80.110167,
+        "zone": "Zone_2"
+    },
+    {
+        "student_id": "STU_064",
+        "lat": 26.641294,
+        "lng": -80.102605,
+        "zone": "Zone_2"
+    },
+    {
+        "student_id": "STU_065",
+        "lat": 26.616418,
+        "lng": -80.064149,
+        "zone": "Zone_2"
+    },
+    {
+        "student_id": "STU_066",
+        "lat": 26.916862,
+        "lng": -80.075595,
+        "zone": "Zone_1"
+    },
+    {
+        "student_id": "STU_067",
+        "lat": 26.667329,
+        "lng": -80.228558,
+        "zone": "Zone_3"
+    },
+    {
+        "student_id": "STU_068",
+        "lat": 26.810734,
+        "lng": -80.062947,
+        "zone": "Zone_1"
+    },
+    {
+        "student_id": "STU_069",
+        "lat": 26.539234,
+        "lng": -80.144717,
+        "zone": "Zone_2"
+    },
+    {
+        "student_id": "STU_070",
+        "lat": 26.619906,
+        "lng": -80.133776,
+        "zone": "Zone_2"
+    },
+    {
+        "student_id": "STU_071",
+        "lat": 26.725404,
+        "lng": -80.070069,
+        "zone": "Zone_3"
+    },
+    {
+        "student_id": "STU_072",
+        "lat": 26.693705,
+        "lng": -80.203344,
+        "zone": "Zone_3"
+    },
+    {
+        "student_id": "STU_073",
+        "lat": 26.48873,
+        "lng": -80.098523,
+        "zone": "Zone_2"
+    },
+    {
+        "student_id": "STU_074",
+        "lat": 26.848721,
+        "lng": -80.145044,
+        "zone": "Zone_1"
+    },
+    {
+        "student_id": "STU_075",
+        "lat": 26.695711,
+        "lng": -80.25995,
+        "zone": "Zone_3"
+    },
+    {
+        "student_id": "STU_076",
+        "lat": 26.523719,
+        "lng": -80.074781,
+        "zone": "Zone_2"
+    },
+    {
+        "student_id": "STU_077",
+        "lat": 26.63743,
+        "lng": -80.071416,
+        "zone": "Zone_2"
+    },
+    {
+        "student_id": "STU_078",
+        "lat": 26.875508,
+        "lng": -80.079531,
+        "zone": "Zone_1"
+    },
+    {
+        "student_id": "STU_079",
+        "lat": 26.867697,
+        "lng": -80.074563,
+        "zone": "Zone_1"
+    },
+    {
+        "student_id": "STU_080",
+        "lat": 26.685312,
+        "lng": -80.13042,
+        "zone": "Zone_3"
+    },
+    {
+        "student_id": "STU_081",
+        "lat": 26.562422,
+        "lng": -80.064865,
+        "zone": "Zone_2"
+    },
+    {
+        "student_id": "STU_082",
+        "lat": 26.882657,
+        "lng": -80.07514,
+        "zone": "Zone_1"
+    },
+    {
+        "student_id": "STU_083",
+        "lat": 26.499096,
+        "lng": -80.105848,
+        "zone": "Zone_2"
+    },
+    {
+        "student_id": "STU_084",
+        "lat": 26.649107,
+        "lng": -80.064667,
+        "zone": "Zone_2"
+    },
+    {
+        "student_id": "STU_085",
+        "lat": 26.878491,
+        "lng": -80.078818,
+        "zone": "Zone_1"
+    },
+    {
+        "student_id": "STU_086",
+        "lat": 26.912617,
+        "lng": -80.079978,
+        "zone": "Zone_1"
+    },
+    {
+        "student_id": "STU_087",
+        "lat": 26.595548,
+        "lng": -80.088884,
+        "zone": "Zone_2"
+    },
+    {
+        "student_id": "STU_088",
+        "lat": 26.711628,
+        "lng": -80.1973,
+        "zone": "Zone_3"
+    },
+    {
+        "student_id": "STU_089",
+        "lat": 26.647192,
+        "lng": -80.078757,
+        "zone": "Zone_2"
+    },
+    {
+        "student_id": "STU_090",
+        "lat": 26.674975,
+        "lng": -80.139763,
+        "zone": "Zone_3"
+    },
+    {
+        "student_id": "STU_091",
+        "lat": 26.611305,
+        "lng": -80.111738,
+        "zone": "Zone_2"
+    },
+    {
+        "student_id": "STU_092",
+        "lat": 26.749765,
+        "lng": -80.109481,
+        "zone": "Zone_1"
+    },
+    {
+        "student_id": "STU_093",
+        "lat": 26.849072,
+        "lng": -80.119827,
+        "zone": "Zone_1"
+    },
+    {
+        "student_id": "STU_094",
+        "lat": 26.66474,
+        "lng": -80.247166,
+        "zone": "Zone_3"
+    },
+    {
+        "student_id": "STU_095",
+        "lat": 26.640191,
+        "lng": -80.082221,
+        "zone": "Zone_2"
+    },
+    {
+        "student_id": "STU_096",
+        "lat": 26.637931,
+        "lng": -80.175421,
+        "zone": "Zone_2"
+    },
+    {
+        "student_id": "STU_097",
+        "lat": 26.683371,
+        "lng": -80.199321,
+        "zone": "Zone_3"
+    },
+    {
+        "student_id": "STU_098",
+        "lat": 26.633864,
+        "lng": -80.145837,
+        "zone": "Zone_2"
+    },
+    {
+        "student_id": "STU_099",
+        "lat": 26.696785,
+        "lng": -80.139043,
+        "zone": "Zone_3"
+    },
+    {
+        "student_id": "STU_100",
+        "lat": 26.702774,
+        "lng": -80.216695,
+        "zone": "Zone_3"
+    }
+]
