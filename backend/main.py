@@ -73,7 +73,8 @@ pwd_context = CryptContext(schemes=["sha256_crypt"], deprecated="auto")
 # 基础测试 API
 @app.get("/")
 def read_root():
-    return {"message": "欢迎来到校车系统后端 API 大脑！"}
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse(url="/login.html")
 
 # --- Token 验证端点：前端用来确认 token 是否仍然有效 ---
 @app.get("/api/me")

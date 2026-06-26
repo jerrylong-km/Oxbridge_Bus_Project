@@ -2,6 +2,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
+from typing import Optional
 from pydantic import BaseModel
 
 import models
@@ -16,7 +17,7 @@ class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     role: str
-    school_id: int | None = None
+    school_id: Optional[int] = None
     username: str
 
 
