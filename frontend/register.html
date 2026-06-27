@@ -3,57 +3,78 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SaaS平台入驻申请 - 智慧校车系统</title>
+    <title data-i18n-doctitle="register.pageTitle">SaaS平台入驻申请 - 智慧校车系统</title>
+    <script src="/i18n.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .lang-switch {
+            position: fixed;
+            top: 16px;
+            right: 16px;
+            z-index: 50;
+            background: rgba(0,0,0,0.06);
+            border: 1px solid rgba(0,0,0,0.12);
+            color: #374151;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .lang-switch:hover { background: rgba(0,0,0,0.1); }
+    </style>
 </head>
 <body class="bg-gray-50 flex items-center justify-center min-h-screen">
 
+    <button class="lang-switch" onclick="I18n.toggle()" data-i18n="common.langSwitch">English</button>
+
     <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
-        <h2 class="text-2xl font-bold text-gray-800 text-center mb-6">申请入驻校车系统</h2>
-        
+        <h2 class="text-2xl font-bold text-gray-800 text-center mb-6" data-i18n="register.title">申请入驻校车系统</h2>
+
         <form id="registerForm" class="space-y-4">
             <div>
-                <label class="block text-sm font-medium text-gray-700">学校名称</label>
+                <label class="block text-sm font-medium text-gray-700" data-i18n="register.schoolName">学校名称</label>
                 <input type="text" id="school_name" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
             </div>
 
             <div>
-                <label class="block text-sm font-medium text-gray-700">学校地址 (输入时自动补全)</label>
-                <input type="text" id="address" required placeholder="开始输入学校地址..." class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                <label class="block text-sm font-medium text-gray-700" data-i18n="register.address">学校地址 (输入时自动补全)</label>
+                <input type="text" id="address" required data-i18n-placeholder="register.addressPlaceholder" placeholder="开始输入学校地址..." class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
             </div>
 
             <div class="flex space-x-4">
                 <div class="w-1/2">
-                    <label class="block text-xs text-gray-500">自动抓取纬度</label>
+                    <label class="block text-xs text-gray-500" data-i18n="register.latAuto">自动抓取纬度</label>
                     <input type="text" id="lat" readonly class="mt-1 block w-full bg-gray-100 px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-500">
                 </div>
                 <div class="w-1/2">
-                    <label class="block text-xs text-gray-500">自动抓取经度</label>
+                    <label class="block text-xs text-gray-500" data-i18n="register.lngAuto">自动抓取经度</label>
                     <input type="text" id="lng" readonly class="mt-1 block w-full bg-gray-100 px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-500">
                 </div>
             </div>
 
             <hr class="my-4">
-            
+
             <div>
-                <label class="block text-sm font-medium text-gray-700">管理员用户名</label>
+                <label class="block text-sm font-medium text-gray-700" data-i18n="register.adminUsername">管理员用户名</label>
                 <input type="text" id="username" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm">
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700">管理员邮箱</label>
+                <label class="block text-sm font-medium text-gray-700" data-i18n="register.adminEmail">管理员邮箱</label>
                 <input type="email" id="email" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm">
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700">登录密码</label>
+                <label class="block text-sm font-medium text-gray-700" data-i18n="register.password">登录密码</label>
                 <input type="password" id="password" required minlength="6" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm">
             </div>
             <div>
-                <label class="block text-sm font-medium text-gray-700">确认密码</label>
-                <input type="password" id="password_confirm" required minlength="6" placeholder="请再次输入密码" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm">
-                <p id="pwdHint" class="mt-1 text-xs text-red-600 hidden">两次输入的密码不一致</p>
+                <label class="block text-sm font-medium text-gray-700" data-i18n="register.passwordConfirm">确认密码</label>
+                <input type="password" id="password_confirm" required minlength="6" data-i18n-placeholder="register.passwordConfirmPlaceholder" placeholder="请再次输入密码" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm">
+                <p id="pwdHint" class="mt-1 text-xs text-red-600 hidden" data-i18n="register.pwdMismatch">两次输入的密码不一致</p>
             </div>
 
-            <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none">
+            <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none" data-i18n="register.submit">
                 提交申请
             </button>
         </form>
@@ -123,7 +144,7 @@
 
         // 两次密码必须一致
         if (password !== passwordConfirm) {
-            alert("错误：两次输入的密码不一致，请重新确认。");
+            alert(t('register.errPwdMismatch'));
             return;
         }
 
@@ -142,7 +163,7 @@
 
         // 强校验：如果任何一个字段为空，直接拦截，不发给后端
         if (!schoolName || !username || !email || !password || !lat || !lng) {
-            alert("错误：检测到有必填项未填写（请确保已通过地图下拉菜单选择了有效地址以自动获取经纬度）");
+            alert(t('register.errMissingFields'));
             return;
         }
 
@@ -164,11 +185,11 @@
             } else {
                 // 如果后端再次报错，直接显示报错内容
                 messageBox.className = "mt-4 text-center text-sm font-bold text-red-600";
-                messageBox.innerText = "注册失败: " + JSON.stringify(result.detail || result);
+                messageBox.innerText = t('register.failPrefix') + JSON.stringify(result.detail || result);
             }
         } catch (error) {
             console.error("网络连接错误:", error);
-            alert("错误类型: " + error.name + "\n错误信息: " + error.message + "\n\n如果是 TypeError: Failed to fetch，说明后端未运行或 CORS 有问题。");
+            alert(t('register.errNetwork', { name: error.name, message: error.message }));
         }
     });
 </script>

@@ -2,6 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
+    <script src="/i18n.js"></script>
     <script src="auth_guard.js?v=2"></script>
     <script>
         // 内联鉴权：立即执行，不依赖外部文件缓存
@@ -18,7 +19,7 @@
         })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Oxbridge Academy - 校车线路管理</title>
+    <title data-i18n-doctitle="sd.pageTitle">Oxbridge Academy - 校车线路管理</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0;
@@ -391,56 +392,71 @@
             display: flex; align-items: center; justify-content: center; gap: 8px;
         }
         .btn-reset-stops:hover { background: rgba(239,68,68,0.18); border-color: rgba(239,68,68,0.7); }
+
+        .lang-switch {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            color: #e0e0e0;
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-left: 8px;
+        }
+        .lang-switch:hover { background: rgba(255, 255, 255, 0.15); }
     </style>
 </head>
 <body>
     <div id="dashboard">
         <div class="dash-header">
             <div>
-                <h1>校车线路管理</h1>
-                <div class="school-name" id="school-name">加载中…</div>
+                <h1 data-i18n="sd.dashTitle">校车线路管理</h1>
+                <div class="school-name" id="school-name"></div>
             </div>
             <div style="display:flex; align-items:center;">
                 <span id="header-username" style="font-size:12px; color:#a5b4fc; margin-right:10px; font-weight:600;"></span>
-                <button class="avatar-btn" id="avatar-btn" onclick="openProfileModal()" title="个人信息">
+                <button class="avatar-btn" id="avatar-btn" onclick="openProfileModal()" data-i18n-title="sd.profileTitle" title="个人信息">
                     <span id="avatar-placeholder">?</span>
                 </button>
                 <button class="btn-logout" onclick="handleLogout()">
-                    <i class="fa-solid fa-right-from-bracket"></i> 登出
+                    <i class="fa-solid fa-right-from-bracket"></i> <span data-i18n="sd.logout">登出</span>
                 </button>
+                <button class="lang-switch" onclick="I18n.toggle()" data-i18n="common.langSwitch">English</button>
             </div>
         </div>
 
         <div class="mode-tabs">
-            <div class="mode-tab active" id="tab-existing" onclick="switchMode('existing')">现有校车线路</div>
-            <div class="mode-tab" id="tab-optimized" onclick="switchMode('optimized')">优化后校车线路</div>
+            <div class="mode-tab active" id="tab-existing" onclick="switchMode('existing')" data-i18n="sd.tabExisting">现有校车线路</div>
+            <div class="mode-tab" id="tab-optimized" onclick="switchMode('optimized')" data-i18n="sd.tabOptimized">优化后校车线路</div>
         </div>
 
         <!-- 模式一：现有校车线路 -->
         <div class="panel" id="panel-existing">
             <button class="btn-primary" onclick="createLine()">
-                <i class="fa-solid fa-plus"></i> 新建校车线路
+                <i class="fa-solid fa-plus"></i> <span data-i18n="sd.newLine">新建校车线路</span>
             </button>
             <!-- 新建线路内联表单（点击"新建校车线路"后展开）-->
             <div id="new-line-form" class="line-card" style="display:none; border-left-color:#6366f1; margin-top:12px;">
                 <div style="font-size:13px; font-weight:700; color:#e2e8f0; margin-bottom:10px;">
-                    <i class="fa-solid fa-route" style="color:#6366f1;"></i> 新建线路
+                    <i class="fa-solid fa-route" style="color:#6366f1;"></i> <span data-i18n="sd.newLineBtn">新建线路</span>
                 </div>
-                <label style="font-size:11px; color:#94a3b8; display:block; margin-bottom:4px;">线路名称</label>
-                <input type="text" id="new-line-name" placeholder="如：1号线 / 城东线"
+                <label style="font-size:11px; color:#94a3b8; display:block; margin-bottom:4px;" data-i18n="sd.lineName">线路名称</label>
+                <input type="text" id="new-line-name" data-i18n-placeholder="sd.lineNamePlaceholder" placeholder="如：1号线 / 城东线"
                     style="width:100%; padding:8px 10px; border-radius:6px; border:1px solid rgba(255,255,255,0.1);
                            background:rgba(255,255,255,0.04); color:#e2e8f0; font-size:13px;"
                     onkeydown="if(event.key==='Enter')submitNewLine()">
                 <div class="form-actions" style="margin-top:12px;">
-                    <button class="btn-save" onclick="submitNewLine()">确认新建</button>
-                    <button class="btn-cancel" onclick="cancelNewLine()">取消</button>
+                    <button class="btn-save" onclick="submitNewLine()" data-i18n="sd.confirmCreate">确认新建</button>
+                    <button class="btn-cancel" onclick="cancelNewLine()" data-i18n="sd.cancel">取消</button>
                 </div>
             </div>
             <div id="lines-container">
-                <div class="empty-hint">还没有线路，点击上方按钮新建第一条。</div>
+                <div class="empty-hint" data-i18n="sd.emptyHint">还没有线路，点击上方按钮新建第一条。</div>
             </div>
             <button class="btn-generate" id="btn-gen-routes" onclick="generateRoutes()" style="display:none; margin-top:12px;">
-                <i class="fa-solid fa-road"></i> 生成校车实际运行路线
+                <i class="fa-solid fa-road"></i> <span data-i18n="sd.generateRoutes">生成校车实际运行路线</span>
             </button>
         </div>
 
@@ -449,23 +465,23 @@
 
             <!-- Step 1: 导入学生数据 -->
             <div class="opt-step" id="opt-step-1">
-                <h3><span class="step-badge">1</span> 导入学生数据</h3>
-                <p class="step-desc">上传包含学生姓名、年级、家庭住址的 Excel 文件（.xlsx）</p>
+                <h3><span class="step-badge">1</span> <span data-i18n="sd.step1Title">导入学生数据</span></h3>
+                <p class="step-desc" data-i18n="sd.step1Desc">上传包含学生姓名、年级、家庭住址的 Excel 文件（.xlsx）</p>
                 <div class="upload-area" id="upload-area">
                     <i class="fa-solid fa-cloud-arrow-up"></i>
-                    <span>点击选择文件或拖拽到此处</span>
+                    <span data-i18n="sd.step1Upload">点击选择文件或拖拽到此处</span>
                     <input type="file" id="student-file-input" accept=".xlsx,.xls" onchange="handleFileUpload(event)">
                 </div>
                 <div id="upload-result" style="display:none;">
                     <div class="result-bar">
                         <span id="upload-count"></span>
                         <button class="btn-small btn-danger" onclick="clearStudents()">
-                            <i class="fa-solid fa-trash"></i> 清空重来
+                            <i class="fa-solid fa-trash"></i> <span data-i18n="sd.step1Clear">清空重来</span>
                         </button>
                     </div>
                     <div class="table-scroll">
                     <table class="mini-table" id="student-preview-table">
-                        <thead><tr><th>姓名</th><th>年级</th><th>地址</th></tr></thead>
+                        <thead><tr><th data-i18n="sd.step1ThName">姓名</th><th data-i18n="sd.step1ThGrade">年级</th><th data-i18n="sd.step1ThAddress">地址</th></tr></thead>
                         <tbody id="student-preview-body"></tbody>
                     </table>
                     </div>
@@ -474,10 +490,10 @@
 
             <!-- Step 2: 地址解析 -->
             <div class="opt-step" id="opt-step-2" style="display:none;">
-                <h3><span class="step-badge">2</span> 地址解析 (Geocoding)</h3>
-                <p class="step-desc">将学生家庭住址转换为地图坐标</p>
+                <h3><span class="step-badge">2</span> <span data-i18n="sd.step2Title">地址解析 (Geocoding)</span></h3>
+                <p class="step-desc" data-i18n="sd.step2Desc">将学生家庭住址转换为地图坐标</p>
                 <button class="btn-primary" id="btn-geocode" onclick="startGeocode()">
-                    <i class="fa-solid fa-map-location-dot"></i> 开始解析地址
+                    <i class="fa-solid fa-map-location-dot"></i> <span data-i18n="sd.step2Btn">开始解析地址</span>
                 </button>
                 <div id="geocode-progress" style="display:none;">
                     <div class="progress-bar"><div class="progress-fill" id="geocode-fill"></div></div>
@@ -487,7 +503,7 @@
                 <div id="geocode-result-list" style="display:none; margin-top:10px;">
                     <div class="table-scroll">
                         <table class="mini-table" id="geocode-student-table">
-                            <thead><tr><th>#</th><th>姓名</th><th>年级</th><th>纬度</th><th>经度</th></tr></thead>
+                            <thead><tr><th>#</th><th data-i18n="sd.step2ThName">姓名</th><th data-i18n="sd.step2ThGrade">年级</th><th data-i18n="sd.step2ThLat">纬度</th><th data-i18n="sd.step2ThLng">经度</th></tr></thead>
                             <tbody id="geocode-student-body"></tbody>
                         </table>
                     </div>
@@ -496,54 +512,54 @@
 
             <!-- Step 3: 校车分区 -->
             <div class="opt-step" id="opt-step-3" style="display:none;">
-                <h3><span class="step-badge">3</span> 校车分区</h3>
-                <p class="step-desc">设置校车数量和容量，系统自动按地理位置分区</p>
+                <h3><span class="step-badge">3</span> <span data-i18n="sd.step3Title">校车分区</span></h3>
+                <p class="step-desc" data-i18n="sd.step3Desc">设置校车数量和容量，系统自动按地理位置分区</p>
                 <div class="param-row">
-                    <label>校车数量：<input type="number" id="input-bus-count" value="3" min="1" max="20"></label>
-                    <label>每车座位：<input type="number" id="input-bus-capacity" value="45" min="10" max="80"></label>
+                    <label><span data-i18n="sd.step3Buses">校车数量：</span><input type="number" id="input-bus-count" value="3" min="1" max="20"></label>
+                    <label><span data-i18n="sd.step3Seats">每车座位：</span><input type="number" id="input-bus-capacity" value="45" min="10" max="80"></label>
                 </div>
                 <button class="btn-primary" id="btn-cluster" onclick="startCluster()">
-                    <i class="fa-solid fa-layer-group"></i> 开始分区
+                    <i class="fa-solid fa-layer-group"></i> <span data-i18n="sd.step3Btn">开始分区</span>
                 </button>
                 <div id="cluster-result" style="display:none;"></div>
             </div>
 
             <!-- Step 4: 站点优化 -->
             <div class="opt-step" id="opt-step-4" style="display:none;">
-                <h3><span class="step-badge">4</span> 站点优化</h3>
-                <p class="step-desc">系统计算每条线路的最优站点位置，可拖拽调整</p>
+                <h3><span class="step-badge">4</span> <span data-i18n="sd.step4Title">站点优化</span></h3>
+                <p class="step-desc" data-i18n="sd.step4Desc">系统计算每条线路的最优站点位置，可拖拽调整</p>
                 <div class="param-row">
-                    <label>每线路最大站点数：<input type="number" id="input-max-stops" value="6" min="2" max="10"></label>
+                    <label><span data-i18n="sd.step4MaxStops">每线路最大站点数：</span><input type="number" id="input-max-stops" value="6" min="2" max="10"></label>
                 </div>
                 <button class="btn-primary" id="btn-optimize-stops" onclick="startOptimizeStops()">
-                    <i class="fa-solid fa-location-crosshairs"></i> 计算最优站点
+                    <i class="fa-solid fa-location-crosshairs"></i> <span data-i18n="sd.step4Btn">计算最优站点</span>
                 </button>
                 <div id="stops-result" style="display:none;"></div>
                 <div id="stops-actions" style="display:none; margin-top:14px;">
                     <button class="btn-confirm-stops" id="btn-confirm-stops" onclick="confirmStops()" disabled>
-                        <i class="fa-solid fa-check"></i> 确认站点位置
+                        <i class="fa-solid fa-check"></i> <span data-i18n="sd.step4Confirm">确认站点位置</span>
                     </button>
                     <button class="btn-reset-stops" id="btn-reset-stops" onclick="resetStops()">
-                        <i class="fa-solid fa-rotate-left"></i> 重置站点位置（恢复算法原始结果）
+                        <i class="fa-solid fa-rotate-left"></i> <span data-i18n="sd.step4Reset">重置站点位置（恢复算法原始结果）</span>
                     </button>
                 </div>
             </div>
 
             <!-- Step 5: 生成路线 -->
             <div class="opt-step" id="opt-step-5" style="display:none;">
-                <h3><span class="step-badge">5</span> 生成优化路线</h3>
-                <p class="step-desc">根据站点位置计算最优行驶路线</p>
+                <h3><span class="step-badge">5</span> <span data-i18n="sd.step5Title">生成优化路线</span></h3>
+                <p class="step-desc" data-i18n="sd.step5Desc">根据站点位置计算最优行驶路线</p>
                 <button class="btn-primary btn-generate" id="btn-gen-opt-routes" onclick="startGenerateRoutes()">
-                    <i class="fa-solid fa-route"></i> 生成优化后校车线路
+                    <i class="fa-solid fa-route"></i> <span data-i18n="sd.step5Btn">生成优化后校车线路</span>
                 </button>
                 <p class="step-desc" style="font-size:11px;margin-top:8px;color:#94a3b8;">
-                    实线 = 早上上学（7:00 路况）&nbsp;&nbsp;虚线 = 下午放学（16:30 路况）
+                    <span data-i18n="sd.step5AmLegend">实线 = 早上上学（7:00 路况）</span>&nbsp;&nbsp;<span data-i18n="sd.step5PmLegend">虚线 = 下午放学（16:30 路况）</span>
                 </p>
             </div>
 
             <!-- Step 6: 各线路行驶里程和耗时 -->
             <div class="opt-step" id="opt-step-6" style="display:none;">
-                <h3><span class="step-badge">6</span> 各线路行驶里程和耗时</h3>
+                <h3><span class="step-badge">6</span> <span data-i18n="sd.step6Title">各线路行驶里程和耗时</span></h3>
                 <div id="comparison-result"></div>
             </div>
 
@@ -553,33 +569,33 @@
     <!-- 个人信息编辑模态框 -->
     <div class="modal-overlay" id="profile-modal" onclick="if(event.target===this)closeProfileModal()">
         <div class="modal-box">
-            <h2><i class="fa-solid fa-user-pen"></i> 个人信息</h2>
+            <h2><i class="fa-solid fa-user-pen"></i> <span data-i18n="sd.modalProfile">个人信息</span></h2>
             <div class="modal-avatar-preview" id="modal-avatar-preview">
                 <span id="modal-avatar-placeholder"><i class="fa-solid fa-user"></i></span>
             </div>
             <label class="modal-avatar-upload" onclick="document.getElementById('avatar-file-input').click()">
-                <i class="fa-solid fa-camera"></i> 更换头像
+                <i class="fa-solid fa-camera"></i> <span data-i18n="sd.changeAvatar">更换头像</span>
             </label>
             <input type="file" id="avatar-file-input" accept="image/*" style="display:none" onchange="previewAvatar(event)">
 
-            <label>用户名（不可修改）</label>
+            <label data-i18n="sd.usernameReadonly">用户名（不可修改）</label>
             <input type="text" id="profile-username" disabled style="opacity:0.5;">
 
-            <label>邮箱</label>
+            <label data-i18n="sd.emailLabel">邮箱</label>
             <input type="email" id="profile-email" placeholder="your@email.com">
 
-            <label style="margin-top:18px; font-size:13px; color:#c7d2fe; font-weight:600;">修改密码</label>
-            <label>旧密码</label>
-            <input type="password" id="profile-old-pwd" placeholder="输入当前密码">
-            <label>新密码</label>
-            <input type="password" id="profile-new-pwd" placeholder="输入新密码" oninput="checkPwdMatch()">
-            <label>确认新密码</label>
-            <input type="password" id="profile-new-pwd2" placeholder="再次输入新密码" oninput="checkPwdMatch()">
+            <label style="margin-top:18px; font-size:13px; color:#c7d2fe; font-weight:600;" data-i18n="sd.changePassword">修改密码</label>
+            <label data-i18n="sd.oldPassword">旧密码</label>
+            <input type="password" id="profile-old-pwd" data-i18n-placeholder="sd.oldPwdPlaceholder" placeholder="输入当前密码">
+            <label data-i18n="sd.newPassword">新密码</label>
+            <input type="password" id="profile-new-pwd" data-i18n-placeholder="sd.newPwdPlaceholder" placeholder="输入新密码" oninput="checkPwdMatch()">
+            <label data-i18n="sd.confirmNewPwd">确认新密码</label>
+            <input type="password" id="profile-new-pwd2" data-i18n-placeholder="sd.confirmNewPwdPlaceholder" placeholder="再次输入新密码" oninput="checkPwdMatch()">
             <div class="pwd-hint" id="pwd-match-hint"></div>
 
             <div class="modal-actions">
-                <button class="btn-save" onclick="saveProfile()">保存</button>
-                <button class="btn-cancel" onclick="closeProfileModal()">取消</button>
+                <button class="btn-save" onclick="saveProfile()" data-i18n="sd.save">保存</button>
+                <button class="btn-cancel" onclick="closeProfileModal()" data-i18n="sd.cancel">取消</button>
             </div>
         </div>
     </div>
@@ -588,17 +604,17 @@
     <div class="modal-overlay" id="manual-geocode-modal" onclick="if(event.target===this)closeManualGeocodeModal()">
         <div class="modal-box" style="width:520px; max-height:80vh; overflow-y:auto;">
             <h2 style="margin-bottom:8px;">
-                <i class="fa-solid fa-map-location-dot"></i> 手工录入地址
+                <i class="fa-solid fa-map-location-dot"></i> <span data-i18n="sd.manualGeoTitle">手工录入地址</span>
             </h2>
-            <p style="font-size:12px;color:#94a3b8;margin-bottom:20px;">
+            <p style="font-size:12px;color:#94a3b8;margin-bottom:20px;" data-i18n="sd.manualGeoDesc">
                 以下学生地址无法自动解析，请在输入框中搜索并选择正确地址后提交。
             </p>
             <div id="manual-geocode-list"></div>
             <div class="modal-actions">
                 <button class="btn-save" onclick="submitManualGeocodes()">
-                    <i class="fa-solid fa-check"></i> 全部提交
+                    <i class="fa-solid fa-check"></i> <span data-i18n="sd.manualGeoSubmitAll">全部提交</span>
                 </button>
-                <button class="btn-cancel" onclick="closeManualGeocodeModal()">稍后处理</button>
+                <button class="btn-cancel" onclick="closeManualGeocodeModal()" data-i18n="sd.manualGeoLater">稍后处理</button>
             </div>
         </div>
     </div>
@@ -683,11 +699,12 @@
         }
 
         async function loadSchool() {
+            document.getElementById('school-name').innerText = t('sd.loading');
             try {
                 const resp = await fetch('/api/school/me', { headers: getAuthHeaders() });
                 if (resp.status === 401 || resp.status === 403) { handleLogout(); return; }
                 school = await resp.json();
-                document.getElementById('school-name').innerText = school.school_name || '未命名学校';
+                document.getElementById('school-name').innerText = school.school_name || t('sd.unknownSchool');
 
                 if (school.latitude && school.longitude && map) {
                     const pos = { lat: school.latitude, lng: school.longitude };
@@ -718,7 +735,7 @@
         function renderLines() {
             const container = document.getElementById('lines-container');
             if (!lines.length) {
-                container.innerHTML = '<div class="empty-hint">还没有线路，点击上方按钮新建第一条。</div>';
+                container.innerHTML = '<div class="empty-hint">' + t('sd.emptyHint') + '</div>';
                 // 无线路时隐藏生成路线按钮
                 document.getElementById('btn-gen-routes').style.display = 'none';
                 return;
@@ -737,90 +754,90 @@
                                 <div class="stop-main">${escapeHtml(s.stop_name)}</div>
                                 <div class="stop-sub">
                                     ${s.address ? '<i class="fa-solid fa-location-dot"></i> ' + escapeHtml(s.address) + '<br>' : ''}
-                                    ${s.arrival_morning ? '<span class="stop-time-badge">早上：' + s.arrival_morning + '</span>' : ''}
-                                    ${s.arrival_afternoon ? '<span class="stop-time-badge">下午：' + s.arrival_afternoon + '</span>' : ''}
+                                    ${s.arrival_morning ? '<span class="stop-time-badge">' + t('sd.morning') + s.arrival_morning + '</span>' : ''}
+                                    ${s.arrival_afternoon ? '<span class="stop-time-badge">' + t('sd.afternoon') + s.arrival_afternoon + '</span>' : ''}
                                 </div>
                             </div>
                             <div style="display:flex;gap:2px;flex-shrink:0;">
-                                <button class="icon-btn edit" onclick="openEditStop(${ln.line_id}, ${s.stop_id})" title="编辑站点">
+                                <button class="icon-btn edit" onclick="openEditStop(${ln.line_id}, ${s.stop_id})" title="${t('sd.editStop')}">
                                     <i class="fa-solid fa-pen-to-square"></i>
                                 </button>
-                                <button class="icon-btn del" onclick="deleteStop(${s.stop_id})" title="删除站点">
+                                <button class="icon-btn del" onclick="deleteStop(${s.stop_id})" title="${t('sd.deleteStop')}">
                                     <i class="fa-solid fa-trash"></i>
                                 </button>
                             </div>
                         </div>
                         <div class="stop-form" id="edit-stop-form-${s.stop_id}">
-                            <label>站点名称</label>
+                            <label>${t('sd.stopName')}</label>
                             <input type="text" id="es-name-${s.stop_id}" value="${escapeHtml(s.stop_name)}">
-                            <label>站点地址</label>
+                            <label>${t('sd.stopAddress')}</label>
                             <input type="text" id="es-addr-${s.stop_id}" value="${escapeHtml(s.address || '')}">
                             <div class="time-row">
                                 <div>
-                                    <label>早上到站</label>
+                                    <label>${t('sd.arrivalMorning')}</label>
                                     <input type="time" id="es-am-${s.stop_id}" value="${s.arrival_morning || ''}">
                                 </div>
                                 <div>
-                                    <label>下午到站</label>
+                                    <label>${t('sd.arrivalAfternoon')}</label>
                                     <input type="time" id="es-pm-${s.stop_id}" value="${s.arrival_afternoon || ''}">
                                 </div>
                             </div>
                             <div class="form-actions">
-                                <button class="btn-save" onclick="saveEditStop(${s.stop_id})">保存修改</button>
-                                <button class="btn-cancel" onclick="closeEditStop(${s.stop_id})">取消</button>
+                                <button class="btn-save" onclick="saveEditStop(${s.stop_id})">${t('sd.saveChanges')}</button>
+                                <button class="btn-cancel" onclick="closeEditStop(${s.stop_id})">${t('sd.cancel')}</button>
                             </div>
                         </div>`;
                     }).join('')
-                    : '<div class="stop-sub" style="padding:6px 2px;">该线路下还没有站点。</div>';
+                    : '<div class="stop-sub" style="padding:6px 2px;">' + t('sd.noStopsYet') + '</div>';
 
                 return `
                     <div class="line-card" style="border-left-color:${color}">
                         <div class="line-card-head">
                             <div class="line-title"><i class="fa-solid fa-route" style="color:${color}"></i> ${escapeHtml(ln.line_name)}</div>
-                            <button class="icon-btn del" onclick="deleteLine(${ln.line_id}, '${escapeJs(ln.line_name)}')" title="删除线路">
-                                <i class="fa-solid fa-trash"></i> 删除线路
+                            <button class="icon-btn del" onclick="deleteLine(${ln.line_id}, '${escapeJs(ln.line_name)}')" title="${t('sd.deleteLine')}">
+                                <i class="fa-solid fa-trash"></i> ${t('sd.deleteLine')}
                             </button>
                         </div>
                         <div class="line-time-row">
-                            <label>早上到校</label>
+                            <label>${t('sd.arriveSchoolMorning')}</label>
                             <input type="time" id="lt-am-${ln.line_id}" value="${ln.arrival_school_morning || ''}" onblur="saveLineTime(${ln.line_id})">
-                            <label>下午发车</label>
+                            <label>${t('sd.departSchoolAfternoon')}</label>
                             <input type="time" id="lt-pm-${ln.line_id}" value="${ln.departure_school_afternoon || ''}" onblur="saveLineTime(${ln.line_id})">
                         </div>
                         ${stopsHtml}
                         <button class="add-stop-btn" onclick="toggleStopForm(${ln.line_id})">
-                            <i class="fa-solid fa-plus"></i> 新建站点
+                            <i class="fa-solid fa-plus"></i> ${t('sd.newStop')}
                         </button>
                         <div class="stop-form" id="stop-form-${ln.line_id}">
-                            <label>站点名称</label>
-                            <input type="text" id="sf-name-${ln.line_id}" placeholder="如：阳光小区站">
-                            <label>站点地址（输入时自动补全）</label>
-                            <input type="text" id="sf-addr-${ln.line_id}" placeholder="开始输入地址…">
+                            <label>${t('sd.stopNameLabel')}</label>
+                            <input type="text" id="sf-name-${ln.line_id}" placeholder="${t('sd.stopNamePlaceholder')}">
+                            <label>${t('sd.stopAddressLabel')}</label>
+                            <input type="text" id="sf-addr-${ln.line_id}" placeholder="${t('sd.stopAddressPlaceholder')}">
                             <div class="time-row">
                                 <div>
-                                    <label>早上到站（上学）</label>
+                                    <label>${t('sd.morningArrival')}</label>
                                     <input type="time" id="sf-am-${ln.line_id}">
                                 </div>
                                 <div>
-                                    <label>下午到站（放学）</label>
+                                    <label>${t('sd.afternoonArrival')}</label>
                                     <input type="time" id="sf-pm-${ln.line_id}">
                                 </div>
                             </div>
                             <div class="form-actions">
-                                <button class="btn-save" onclick="saveStop(${ln.line_id})">保存站点</button>
-                                <button class="btn-cancel" onclick="toggleStopForm(${ln.line_id})">取消</button>
+                                <button class="btn-save" onclick="saveStop(${ln.line_id})">${t('sd.saveStop')}</button>
+                                <button class="btn-cancel" onclick="toggleStopForm(${ln.line_id})">${t('sd.cancel')}</button>
                             </div>
                         </div>
                         <div class="line-stats" id="stats-${ln.line_id}">
                             <div class="stat-row">
-                                <span class="stat-label-tag tag-am">早上</span>
-                                总里程 <span class="stat-value" id="dist-am-${ln.line_id}">--</span> km ｜
-                                耗时 <span class="stat-value" id="dur-am-${ln.line_id}">--</span>
+                                <span class="stat-label-tag tag-am">${t('sd.amLabel')}</span>
+                                ${t('sd.totalDistance')} <span class="stat-value" id="dist-am-${ln.line_id}">--</span> km ｜
+                                ${t('sd.duration')} <span class="stat-value" id="dur-am-${ln.line_id}">--</span>
                             </div>
                             <div class="stat-row">
-                                <span class="stat-label-tag tag-pm">下午</span>
-                                总里程 <span class="stat-value" id="dist-pm-${ln.line_id}">--</span> km ｜
-                                耗时 <span class="stat-value" id="dur-pm-${ln.line_id}">--</span>
+                                <span class="stat-label-tag tag-pm">${t('sd.pmLabel')}</span>
+                                ${t('sd.totalDistance')} <span class="stat-value" id="dist-pm-${ln.line_id}">--</span> km ｜
+                                ${t('sd.duration')} <span class="stat-value" id="dur-pm-${ln.line_id}">--</span>
                             </div>
                         </div>
                     </div>`;
@@ -883,10 +900,10 @@
                         infoWindow.setContent(`
                             <div style="color:#1a1a2e;font-size:13px;">
                                 <b>${seqNum}. ${escapeHtml(s.stop_name)}</b><br>
-                                线路：${escapeHtml(ln.line_name)}<br>
+                                ${t('sd.routeLabel')}${escapeHtml(ln.line_name)}<br>
                                 ${s.address ? escapeHtml(s.address) + '<br>' : ''}
-                                ${s.arrival_morning ? '早上到站：' + s.arrival_morning + '<br>' : ''}
-                                ${s.arrival_afternoon ? '下午到站：' + s.arrival_afternoon : ''}
+                                ${s.arrival_morning ? t('sd.morningArrivalLabel') + s.arrival_morning + '<br>' : ''}
+                                ${s.arrival_afternoon ? t('sd.afternoonArrivalLabel') + s.arrival_afternoon : ''}
                             </div>`);
                         infoWindow.open(map, marker);
                     });
@@ -912,7 +929,7 @@
 
         async function submitNewLine() {
             const name = document.getElementById('new-line-name').value.trim();
-            if (!name) { alert("线路名称不能为空"); return; }
+            if (!name) { alert(t('sd.errLineNameEmpty')); return; }
             try {
                 const resp = await fetch('/api/school/lines', {
                     method: 'POST', headers: getAuthHeaders(),
@@ -923,19 +940,19 @@
                     cancelNewLine();
                     await loadLines();
                 } else {
-                    alert("新建失败：" + (result.detail ?? '未知错误'));
+                    alert(t('sd.errCreateFailed') + (result.detail ?? t('sd.errUnknown')));
                 }
-            } catch (e) { alert("网络错误，新建线路失败"); }
+            } catch (e) { alert(t('sd.errNetworkCreate')); }
         }
 
         async function deleteLine(lineId, lineName) {
-            if (!confirm(`确定删除线路「${lineName}」吗？\n其下所有站点也会一并删除。`)) return;
+            if (!confirm(t('sd.confirmDeleteLine', {name: lineName}))) return;
             try {
                 const resp = await fetch(`/api/school/lines/${lineId}`, { method: 'DELETE', headers: getAuthHeaders() });
                 const result = await resp.json();
                 if (resp.ok) { await loadLines(); }
-                else { alert("删除失败：" + (result.detail ?? '未知错误')); }
-            } catch (e) { alert("网络错误，删除线路失败"); }
+                else { alert(t('sd.errDeleteFailed') + (result.detail ?? t('sd.errUnknown'))); }
+            } catch (e) { alert(t('sd.errNetworkDelete')); }
         }
 
         async function saveStop(lineId) {
@@ -943,7 +960,7 @@
             const addr = document.getElementById(`sf-addr-${lineId}`).value.trim();
             const am = document.getElementById(`sf-am-${lineId}`).value;
             const pm = document.getElementById(`sf-pm-${lineId}`).value;
-            if (!name) { alert("请填写站点名称"); return; }
+            if (!name) { alert(t('sd.errStopNameEmpty')); return; }
 
             const coords = pendingCoords[lineId] || {};
             const body = {
@@ -960,18 +977,18 @@
                 });
                 const result = await resp.json();
                 if (resp.ok) { delete pendingCoords[lineId]; await loadLines(); }
-                else { alert("保存站点失败：" + (result.detail ?? '未知错误')); }
-            } catch (e) { alert("网络错误，保存站点失败"); }
+                else { alert(t('sd.errSaveStopFailed') + (result.detail ?? t('sd.errUnknown'))); }
+            } catch (e) { alert(t('sd.errNetworkSaveStop')); }
         }
 
         async function deleteStop(stopId) {
-            if (!confirm("确定删除该站点吗？")) return;
+            if (!confirm(t('sd.confirmDeleteStop'))) return;
             try {
                 const resp = await fetch(`/api/school/stops/${stopId}`, { method: 'DELETE', headers: getAuthHeaders() });
                 const result = await resp.json();
                 if (resp.ok) { await loadLines(); }
-                else { alert("删除失败：" + (result.detail ?? '未知错误')); }
-            } catch (e) { alert("网络错误，删除站点失败"); }
+                else { alert(t('sd.errDeleteStopFailed') + (result.detail ?? t('sd.errUnknown'))); }
+            } catch (e) { alert(t('sd.errNetworkDeleteStop')); }
         }
 
         // ===== 保存线路到校/发车时间（blur 自动触发）=====
@@ -1002,7 +1019,7 @@
         async function generateRoutes() {
             const btn = document.getElementById('btn-gen-routes');
             btn.disabled = true;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 正在生成路线...';
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> ' + t('sd.generatingRoutes');
 
             // 初始化 DirectionsService（如果尚未初始化）
             if (!directionsService) {
@@ -1019,9 +1036,9 @@
             );
 
             if (!validLines.length) {
-                alert("没有可用的线路数据（请确保站点有坐标信息）。");
+                alert(t('sd.noRouteData'));
                 btn.disabled = false;
-                btn.innerHTML = '<i class="fa-solid fa-road"></i> 生成校车实际运行路线';
+                btn.innerHTML = '<i class="fa-solid fa-road"></i> ' + t('sd.generateRoutes');
                 return;
             }
 
@@ -1131,7 +1148,7 @@
                 const earliest = amStops[0];
                 const diff = timeDiffMinutes(earliest.arrival_morning, ln.arrival_school_morning);
                 const durEl = document.getElementById(`dur-am-${ln.line_id}`);
-                if (durEl) durEl.textContent = `${diff} 分钟 (${earliest.arrival_morning} → ${ln.arrival_school_morning})`;
+                if (durEl) durEl.textContent = t('sd.minutes', {n: diff, from: earliest.arrival_morning, to: ln.arrival_school_morning});
             }
 
             // 下午：耗时 = 最晚站的 arrival_afternoon - departure_school_afternoon
@@ -1142,7 +1159,7 @@
                 const latest = pmStops[pmStops.length - 1];
                 const diff = timeDiffMinutes(ln.departure_school_afternoon, latest.arrival_afternoon);
                 const durEl = document.getElementById(`dur-pm-${ln.line_id}`);
-                if (durEl) durEl.textContent = `${diff} 分钟 (${ln.departure_school_afternoon} → ${latest.arrival_afternoon})`;
+                if (durEl) durEl.textContent = t('sd.minutes', {n: diff, from: ln.departure_school_afternoon, to: latest.arrival_afternoon});
             }
         }
 
@@ -1155,7 +1172,7 @@
 
         function onAllRoutesDrawn(btn) {
             btn.disabled = false;
-            btn.innerHTML = '<i class="fa-solid fa-road"></i> 生成校车实际运行路线';
+            btn.innerHTML = '<i class="fa-solid fa-road"></i> ' + t('sd.generateRoutes');
         }
 
         // ===== 个人信息模态框 =====
@@ -1211,7 +1228,7 @@
             const file = event.target.files[0];
             if (!file) return;
             if (file.size > 500 * 1024) {
-                alert("头像图片不能超过 500KB，请选择较小的图片。");
+                alert(t('sd.avatarTooLarge'));
                 return;
             }
             const reader = new FileReader();
@@ -1229,10 +1246,10 @@
             const hint = document.getElementById('pwd-match-hint');
             if (!p1 && !p2) { hint.textContent = ''; return; }
             if (p2 && p1 !== p2) {
-                hint.textContent = '✗ 两次输入的新密码不一致';
+                hint.textContent = t('sd.pwdMismatch');
                 hint.className = 'pwd-hint err';
             } else if (p2 && p1 === p2) {
-                hint.textContent = '✓ 密码一致';
+                hint.textContent = t('sd.pwdMatch');
                 hint.className = 'pwd-hint ok';
             } else {
                 hint.textContent = '';
@@ -1247,9 +1264,9 @@
 
             // 密码校验
             if (newPwd || newPwd2) {
-                if (!oldPwd) { alert("请输入旧密码"); return; }
-                if (newPwd !== newPwd2) { alert("两次输入的新密码不一致"); return; }
-                if (newPwd.length < 6) { alert("新密码至少 6 个字符"); return; }
+                if (!oldPwd) { alert(t('sd.errOldPwdRequired')); return; }
+                if (newPwd !== newPwd2) { alert(t('sd.errNewPwdMismatch')); return; }
+                if (newPwd.length < 6) { alert(t('sd.errNewPwdLength')); return; }
             }
 
             const body = {};
@@ -1268,15 +1285,15 @@
                 });
                 const result = await resp.json();
                 if (resp.ok) {
-                    alert("个人信息已更新");
+                    alert(t('sd.profileUpdated'));
                     if (body.email) profileData.email = body.email;
                     if (body.avatar) profileData.avatar = body.avatar;
                     renderAvatar();
                     closeProfileModal();
                 } else {
-                    alert("保存失败：" + (result.detail ?? '未知错误'));
+                    alert(t('sd.errSaveProfileFailed') + (result.detail ?? t('sd.errUnknown')));
                 }
-            } catch (e) { alert("网络错误，保存失败"); }
+            } catch (e) { alert(t('sd.errNetworkProfile')); }
         }
 
         // ===== 站点编辑 =====
@@ -1321,7 +1338,7 @@
             const addr = document.getElementById(`es-addr-${stopId}`).value.trim();
             const am = document.getElementById(`es-am-${stopId}`).value;
             const pm = document.getElementById(`es-pm-${stopId}`).value;
-            if (!name) { alert("站点名称不能为空"); return; }
+            if (!name) { alert(t('sd.errEditStopNameEmpty')); return; }
 
             const coords = editStopCoords[stopId] || {};
             const body = {
@@ -1341,9 +1358,9 @@
                     delete editStopCoords[stopId];
                     await loadLines();
                 } else {
-                    alert("保存失败：" + (result.detail ?? '未知错误'));
+                    alert(t('sd.errEditStopFailed') + (result.detail ?? t('sd.errUnknown')));
                 }
-            } catch (e) { alert("网络错误，保存站点失败"); }
+            } catch (e) { alert(t('sd.errNetworkEditStop')); }
         }
 
         // ===== 小工具 =====
@@ -1357,8 +1374,7 @@
         (function () {
             if (!API_KEY || API_KEY.indexOf("在这里") !== -1) {
                 document.getElementById("map").innerHTML =
-                    '<div class="map-fallback">⚠️ 未检测到有效的 Google Maps API Key。<br>' +
-                    '请打开项目根目录的 <b>config.js</b> 填入前端 key 后刷新。</div>';
+                    '<div class="map-fallback">' + t('sd.noApiKey') + '<br>' + t('sd.noApiKeyHint') + '</div>';
                 console.error("config.js 未提供有效的 GOOGLE_MAPS_API_KEY");
                 return;
             }
@@ -1414,7 +1430,7 @@
                 if (status === 'OK' && results[0]) {
                     el.textContent = results[0].formatted_address;
                 } else {
-                    el.textContent = `坐标 ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+                    el.textContent = t('sd.coordLabel', {lat: lat.toFixed(5), lng: lng.toFixed(5)});
                 }
             });
         }
@@ -1433,11 +1449,11 @@
                     body: formData,
                 });
                 const data = await res.json();
-                if (!res.ok) throw new Error(data.detail || '上传失败');
+                if (!res.ok) throw new Error(data.detail || t('sd.uploadFailed'));
 
                 document.getElementById('upload-area').style.display = 'none';
                 document.getElementById('upload-result').style.display = 'block';
-                document.getElementById('upload-count').textContent = `✅ 已导入 ${data.count} 名学生`;
+                document.getElementById('upload-count').textContent = t('sd.importedStudents', {count: data.count});
 
                 const tbody = document.getElementById('student-preview-body');
                 tbody.innerHTML = '';
@@ -1448,14 +1464,14 @@
                 // 显示 Step 2
                 document.getElementById('opt-step-2').style.display = 'block';
             } catch (err) {
-                alert('上传失败: ' + err.message);
+                alert(t('sd.uploadError') + err.message);
             }
         }
 
         // --- Step 2: Geocoding ---
         async function startGeocode() {
             const btn = document.getElementById('btn-geocode');
-            btn.disabled = true; btn.textContent = '解析中...';
+            btn.disabled = true; btn.textContent = t('sd.geocoding');
             document.getElementById('geocode-progress').style.display = 'block';
             document.getElementById('geocode-fill').style.width = '30%';
 
@@ -1465,18 +1481,18 @@
                     headers: getAuthHeaders(),
                 });
                 const data = await res.json();
-                if (!res.ok) throw new Error(data.detail || '解析失败');
+                if (!res.ok) throw new Error(data.detail || t('sd.geocodeFailed'));
 
                 document.getElementById('geocode-fill').style.width = '100%';
                 document.getElementById('geocode-status').textContent =
-                    `✅ 成功解析 ${data.geocoded} 个地址，共 ${data.total} 名学生`;
+                    t('sd.geocodeSuccess', {geocoded: data.geocoded, total: data.total});
 
                 // 显示失败列表
                 if (data.failed && data.failed.length > 0) {
                     // 更新状态栏显示剩余未解析数
                     const failDiv = document.getElementById('geocode-failed');
                     failDiv.style.display = 'block';
-                    failDiv.innerHTML = `<div style="color:#f87171;font-size:12px;margin-top:8px;">⚠️ ${data.failed.length} 条地址未能解析，请手工录入。</div>`;
+                    failDiv.innerHTML = `<div style="color:#f87171;font-size:12px;margin-top:8px;">⚠️ ${t('sd.geocodeManual', {count: data.failed.length})}</div>`;
                     // 弹出手工录入对话框
                     openManualGeocodeModal(data.failed);
                 }
@@ -1490,9 +1506,9 @@
                 // 显示 Step 3
                 document.getElementById('opt-step-3').style.display = 'block';
             } catch (err) {
-                alert('地址解析失败: ' + err.message);
+                alert(t('sd.geocodeFailed') + err.message);
             } finally {
-                btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-map-location-dot"></i> 开始解析地址';
+                btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-map-location-dot"></i> ' + t('sd.step2Btn');
             }
         }
 
@@ -1511,10 +1527,10 @@
                 <div style="margin-bottom:16px;">
                     <div style="font-size:13px;font-weight:700;color:#e2e8f0;margin-bottom:6px;">
                         ${escapeHtml(item.name)}
-                        <span style="color:#94a3b8;font-size:11px;font-weight:400;">（原地址无法解析）</span>
+                        <span style="color:#94a3b8;font-size:11px;font-weight:400;">${t('sd.originalAddrFailed')}</span>
                     </div>
                     <input type="text" id="manual-addr-${item.student_id}"
-                        placeholder="输入正确地址（支持自动补全）…"
+                        placeholder="${t('sd.manualPlaceholder')}"
                         style="width:100%;padding:8px 10px;border-radius:6px;
                                border:1px solid rgba(255,255,255,0.15);
                                background:rgba(255,255,255,0.05);color:#e2e8f0;font-size:13px;">
@@ -1548,7 +1564,7 @@
         async function submitManualGeocodes() {
             const toSubmit = manualGeocodeItems.filter(item => item.coords);
             if (!toSubmit.length) {
-                alert('请先在输入框中选择至少一个地址。');
+                alert(t('sd.manualSelectFirst'));
                 return;
             }
 
@@ -1578,7 +1594,7 @@
             if (remaining <= 0) {
                 failDiv.style.display = 'none';
             } else {
-                failDiv.innerHTML = `<div style="color:#f87171;font-size:12px;margin-top:8px;">⚠️ 仍有 ${remaining} 条地址未录入。</div>`;
+                failDiv.innerHTML = `<div style="color:#f87171;font-size:12px;margin-top:8px;">⚠️ ${t('sd.manualRemaining', {count: remaining})}</div>`;
             }
 
             // 刷新地图上的学生位置点 + 已解析列表
@@ -1665,7 +1681,7 @@
                     body: JSON.stringify({ bus_count: busCount, bus_capacity: busCapacity }),
                 });
                 const data = await res.json();
-                if (!res.ok) throw new Error(data.detail || '分区失败');
+                if (!res.ok) throw new Error(data.detail || t('sd.zoneFailed'));
 
                 // 显示分区结果（含学生列表）
                 const resultDiv = document.getElementById('cluster-result');
@@ -1686,7 +1702,7 @@
                     const count = data.zones[zone];
                     const students = zoneMap[zone] || [];
                     html += `<div class="zone-block">
-                        <span class="zone-tag" style="background:${color}22;color:${color};border:1px solid ${color}55;">${zone}: ${count} 人</span>
+                        <span class="zone-tag" style="background:${color}22;color:${color};border:1px solid ${color}55;">${zone}: ${t('sd.personUnit', {count: count})}</span>
                         <div class="zone-student-list">
                             ${students.map(s => `<div class="zone-student-row"><span>${s.name || '—'}</span><span>Grade ${s.grade || '—'}</span></div>`).join('')}
                         </div>
@@ -1700,7 +1716,7 @@
                 // 显示 Step 4
                 document.getElementById('opt-step-4').style.display = 'block';
             } catch (err) {
-                alert('分区失败: ' + err.message);
+                alert(t('sd.zoneError') + err.message);
             } finally {
                 btn.disabled = false;
             }
@@ -1719,7 +1735,7 @@
                     body: JSON.stringify({ max_stops_per_route: maxStops }),
                 });
                 const data = await res.json();
-                if (!res.ok) throw new Error(data.detail || '优化失败');
+                if (!res.ok) throw new Error(data.detail || t('sd.optimizeFailed'));
 
                 // 在地图上显示站点（可拖拽）
                 optStopMarkers.forEach(m => m.setMap(null));
@@ -1762,10 +1778,10 @@
                             return `<div class="opt-stop-row" id="opt-stop-row-${stop.id}">
                                 <span class="num-dot" style="background:${dotColor};">${seq}</span>
                                 <div class="body">
-                                    <div class="addr" id="opt-stop-addr-${stop.id}">正在解析地址…</div>
-                                    <div class="meta">${stop.stop_name} · 第 ${seq} 站 · ${stop.student_count} 人</div>
+                                    <div class="addr" id="opt-stop-addr-${stop.id}">${t('sd.resolvingAddress')}</div>
+                                    <div class="meta">${stop.stop_name} · ${t('sd.stopLabel', {seq: seq})} · ${t('sd.personUnit', {count: stop.student_count})}</div>
                                     <div class="opt-adjusted-badge" id="opt-stop-adj-${stop.id}" style="display:none;">
-                                        <i class="fa-solid fa-triangle-exclamation"></i> 已手动调整
+                                        <i class="fa-solid fa-triangle-exclamation"></i> ${t('sd.manuallyAdjusted')}
                                     </div>
                                 </div>
                             </div>`;
@@ -1775,7 +1791,7 @@
                             <span class="opt-zone-title" style="color:${color};">
                                 <i class="fa-solid fa-bus"></i> ${zone}
                             </span>
-                            <span class="opt-zone-status pending" id="opt-zone-status-${zone}">待确认</span>
+                            <span class="opt-zone-status pending" id="opt-zone-status-${zone}">${t('sd.pending')}</span>
                         </div>
                         ${rows}
                     </div>`;
@@ -1805,7 +1821,7 @@
                             strokeWeight: 2,
                             strokeColor: '#fff',
                         },
-                        title: `${stop.stop_name} · 第 ${seq} 站 · ${stop.student_count} 人`,
+                        title: `${stop.stop_name} · ${t('sd.stopLabel', {seq: seq})} · ${t('sd.personUnit', {count: stop.student_count})}`,
                         label: { text: String(seq), color: '#fff', fontSize: '12px', fontWeight: 'bold' },
                         zIndex: 5,
                     });
@@ -1849,7 +1865,7 @@
                 // 显示 Step 5
                 document.getElementById('opt-step-5').style.display = 'block';
             } catch (err) {
-                alert('站点优化失败: ' + err.message);
+                alert(t('sd.optimizeError') + err.message);
             } finally {
                 btn.disabled = false;
             }
@@ -1865,7 +1881,7 @@
             // 该区状态回到「待确认」
             const zoneStatus = document.getElementById(`opt-zone-status-${zone}`);
             if (zoneStatus) {
-                zoneStatus.textContent = '待确认';
+                zoneStatus.textContent = t('sd.pending');
                 zoneStatus.classList.remove('optimized');
                 zoneStatus.classList.add('pending');
             }
@@ -1874,7 +1890,7 @@
             const confirmBtn = document.getElementById('btn-confirm-stops');
             confirmBtn.disabled = false;
             confirmBtn.classList.remove('done');
-            confirmBtn.innerHTML = '<i class="fa-solid fa-check"></i> 确认站点位置';
+            confirmBtn.innerHTML = '<i class="fa-solid fa-check"></i> ' + t('sd.step4Confirm');
             document.getElementById('btn-gen-opt-routes').disabled = true;
 
             // 站点变动后，之前画的优化路线已失效，清除
@@ -1887,10 +1903,10 @@
             const confirmBtn = document.getElementById('btn-confirm-stops');
             confirmBtn.disabled = true;
             confirmBtn.classList.remove('done');
-            confirmBtn.innerHTML = '<i class="fa-solid fa-check"></i> 确认站点位置';
+            confirmBtn.innerHTML = '<i class="fa-solid fa-check"></i> ' + t('sd.step4Confirm');
             optZones.forEach(zone => {
                 const st = document.getElementById(`opt-zone-status-${zone}`);
-                if (st) { st.textContent = '待确认'; st.classList.remove('optimized'); st.classList.add('pending'); }
+                if (st) { st.textContent = t('sd.pending'); st.classList.remove('optimized'); st.classList.add('pending'); }
             });
             // 确认按钮未点击时，生成路线按钮不可用
             document.getElementById('btn-gen-opt-routes').disabled = true;
@@ -1900,12 +1916,12 @@
         function confirmStops() {
             optZones.forEach(zone => {
                 const st = document.getElementById(`opt-zone-status-${zone}`);
-                if (st) { st.textContent = '已确认'; st.classList.remove('pending'); st.classList.add('optimized'); }
+                if (st) { st.textContent = t('sd.confirmed'); st.classList.remove('pending'); st.classList.add('optimized'); }
             });
             const confirmBtn = document.getElementById('btn-confirm-stops');
             confirmBtn.disabled = true;
             confirmBtn.classList.add('done');
-            confirmBtn.innerHTML = '<i class="fa-solid fa-circle-check"></i> 站点已优化';
+            confirmBtn.innerHTML = '<i class="fa-solid fa-circle-check"></i> ' + t('sd.stopsOptimized');
             // 站点已确认，解锁生成路线按钮
             document.getElementById('btn-gen-opt-routes').disabled = false;
         }
@@ -1913,8 +1929,8 @@
         // 重置站点位置：把所有手动调整过的站点恢复到算法原始坐标
         async function resetStops() {
             const modifiedIds = Object.keys(optStopState).filter(id => optStopState[id].modified);
-            if (!modifiedIds.length) { alert('没有手动调整过的站点。'); return; }
-            if (!confirm('确认把所有手动调整过的站点恢复到算法原始位置？调整记录将被清除。')) return;
+            if (!modifiedIds.length) { alert(t('sd.noManualAdjustments')); return; }
+            if (!confirm(t('sd.confirmResetStops'))) return;
 
             for (const id of modifiedIds) {
                 const st = optStopState[id];
@@ -1945,7 +1961,7 @@
         // --- Step 5: 生成优化路线 ---
         async function startGenerateRoutes() {
             const btn = document.getElementById('btn-gen-opt-routes');
-            btn.disabled = true; btn.textContent = '正在计算路线...';
+            btn.disabled = true; btn.textContent = t('sd.calculatingRoutes');
 
             try {
                 const res = await fetch('/api/school/students/generate-routes', {
@@ -1953,7 +1969,7 @@
                     headers: getAuthHeaders(),
                 });
                 const data = await res.json();
-                if (!res.ok) throw new Error(data.detail || '生成失败');
+                if (!res.ok) throw new Error(data.detail || t('sd.generateFailed'));
 
                 // 初始化 DirectionsService（如尚未初始化）
                 if (!directionsService) {
@@ -2026,10 +2042,10 @@
                 document.getElementById('opt-step-6').style.display = 'block';
 
             } catch (err) {
-                alert('路线生成失败: ' + err.message);
+                alert(t('sd.routeGenError') + err.message);
             } finally {
                 btn.disabled = false;
-                btn.innerHTML = '<i class="fa-solid fa-route"></i> 生成优化后校车线路';
+                btn.innerHTML = '<i class="fa-solid fa-route"></i> ' + t('sd.step5Btn');
             }
         }
 
@@ -2141,13 +2157,13 @@
             const zones = Object.keys(morningMetrics).filter(z => z !== 'grand_total');
 
             let html = `<div class="compare-card">
-                <h4><i class="fa-solid fa-chart-column"></i> 优化路线统计</h4>
+                <h4><i class="fa-solid fa-chart-column"></i> ${t('sd.optRouteStats')}</h4>
                 <table style="width:100%;border-collapse:collapse;font-size:13px;">
                     <thead>
                         <tr>
-                            <th style="text-align:left;padding:6px 4px;color:#94a3b8;font-weight:600;border-bottom:1px solid rgba(255,255,255,0.1);">线路</th>
-                            <th style="text-align:right;padding:6px 4px;color:#fbbf24;font-weight:600;border-bottom:1px solid rgba(255,255,255,0.1);">🌅 早上上学（实线）</th>
-                            <th style="text-align:right;padding:6px 4px;color:#60a5fa;font-weight:600;border-bottom:1px solid rgba(255,255,255,0.1);">🌆 下午放学（虚线）</th>
+                            <th style="text-align:left;padding:6px 4px;color:#94a3b8;font-weight:600;border-bottom:1px solid rgba(255,255,255,0.1);">${t('sd.thRoute')}</th>
+                            <th style="text-align:right;padding:6px 4px;color:#fbbf24;font-weight:600;border-bottom:1px solid rgba(255,255,255,0.1);">🌅 ${t('sd.thMorning')}</th>
+                            <th style="text-align:right;padding:6px 4px;color:#60a5fa;font-weight:600;border-bottom:1px solid rgba(255,255,255,0.1);">🌆 ${t('sd.thAfternoon')}</th>
                         </tr>
                     </thead>
                     <tbody>`;
@@ -2155,10 +2171,10 @@
             zones.forEach(zone => {
                 const m = morningMetrics[zone]   || {};
                 const a = afternoonMetrics[zone] || {};
-                const mFlag = m.estimated ? ' <span style="color:#fbbf24;font-size:10px;">(估算)</span>' : '';
-                const aFlag = a.estimated ? ' <span style="color:#fbbf24;font-size:10px;">(估算)</span>' : '';
+                const mFlag = m.estimated ? ' <span style="color:#fbbf24;font-size:10px;">' + t('sd.estimated') + '</span>' : '';
+                const aFlag = a.estimated ? ' <span style="color:#fbbf24;font-size:10px;">' + t('sd.estimated') + '</span>' : '';
                 html += `<tr>
-                    <td style="padding:6px 4px;color:#e2e8f0;">${zone} (${m.num_stops || a.num_stops || 0} 站)</td>
+                    <td style="padding:6px 4px;color:#e2e8f0;">${zone} (${t('sd.stopsUnit', {n: m.num_stops || a.num_stops || 0})})</td>
                     <td style="text-align:right;padding:6px 4px;color:#fbbf24;">${m.total_km} km / ${m.total_minutes} min${mFlag}</td>
                     <td style="text-align:right;padding:6px 4px;color:#60a5fa;">${a.total_km} km / ${a.total_minutes} min${aFlag}</td>
                 </tr>`;
@@ -2175,7 +2191,7 @@
 
         // --- 清空学生数据 ---
         async function clearStudents() {
-            if (!confirm('确定清空所有学生和优化数据？此操作不可恢复。')) return;
+            if (!confirm(t('sd.confirmClearAll'))) return;
 
             await fetch('/api/school/students/clear', {
                 method: 'DELETE',
@@ -2213,13 +2229,13 @@
                 if (students.length > 0) {
                     document.getElementById('upload-area').style.display = 'none';
                     document.getElementById('upload-result').style.display = 'block';
-                    document.getElementById('upload-count').textContent = `✅ 已导入 ${students.length} 名学生`;
+                    document.getElementById('upload-count').textContent = t('sd.importedCount', {count: students.length});
                     const tbody = document.getElementById('student-preview-body');
                     tbody.innerHTML = '';
                     students.forEach(s => {
                         tbody.innerHTML += `<tr><td>${s.name}</td><td>${s.grade}</td><td>${s.address}</td></tr>`;
                     });
-                    if (students.length > 5) tbody.innerHTML += `<tr><td colspan="3" style="color:#94a3b8;">... 共 ${students.length} 条</td></tr>`;
+                    if (students.length > 5) tbody.innerHTML += `<tr><td colspan="3" style="color:#94a3b8;">... ${t('sd.totalCount', {count: students.length})}</td></tr>`;
 
                     document.getElementById('opt-step-2').style.display = 'block';
 
@@ -2227,7 +2243,7 @@
                     if (hasCoords) {
                         document.getElementById('geocode-progress').style.display = 'block';
                         document.getElementById('geocode-fill').style.width = '100%';
-                        document.getElementById('geocode-status').textContent = '✅ 地址已解析';
+                        document.getElementById('geocode-status').textContent = t('sd.addressGeocoded');
                         document.getElementById('opt-step-3').style.display = 'block';
                         await showStudentsOnMap();
                     }
@@ -2239,6 +2255,14 @@
                 }
             } catch (e) { /* ignore */ }
         }
+
+        // 语言切换后重新渲染动态内容
+        window.addEventListener('languagechange', () => {
+            if (lines && lines.length) {
+                renderLines();
+                renderStopMarkers();
+            }
+        });
     </script>
 </body>
 </html>

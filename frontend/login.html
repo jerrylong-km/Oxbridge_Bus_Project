@@ -3,9 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>登录 — 智慧校车 SaaS 平台</title>
+    <title data-i18n-doctitle="login.pageTitle">登录 — 智慧校车 SaaS 平台</title>
+    <script src="/i18n.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        .lang-switch {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            color: #e0e0e0;
+            padding: 7px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .lang-switch:hover { background: rgba(255, 255, 255, 0.15); }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -132,31 +149,34 @@
     </style>
 </head>
 <body>
+    <button class="lang-switch" id="langSwitch" onclick="I18n.toggle()" data-i18n="common.langSwitch">English</button>
     <div class="login-container">
         <div class="login-header">
             <div class="icon">🚌</div>
-            <h1>智慧校车管理平台</h1>
-            <p>请输入您的账号和密码登录系统</p>
+            <h1 data-i18n="login.title">智慧校车管理平台</h1>
+            <p data-i18n="login.subtitle">请输入您的账号和密码登录系统</p>
         </div>
 
         <div class="error-msg" id="errorMsg"></div>
 
         <form id="loginForm" onsubmit="handleLogin(event)">
             <div class="form-group">
-                <label for="username">用户名</label>
+                <label for="username" data-i18n="login.username">用户名</label>
                 <input type="text" id="username" name="username"
+                       data-i18n-placeholder="login.usernamePlaceholder"
                        placeholder="请输入用户名" required autocomplete="username">
             </div>
             <div class="form-group">
-                <label for="password">密码</label>
+                <label for="password" data-i18n="login.password">密码</label>
                 <input type="password" id="password" name="password"
+                       data-i18n-placeholder="login.passwordPlaceholder"
                        placeholder="请输入密码" required autocomplete="current-password">
             </div>
-            <button type="submit" class="btn-login" id="btnLogin">登 录</button>
+            <button type="submit" class="btn-login" id="btnLogin" data-i18n="login.submit">登 录</button>
         </form>
 
         <div class="footer-links">
-            还没有账号？<a href="/register.html">注册新学校</a>
+            <span data-i18n="login.noAccount">还没有账号？</span><a href="/register.html" data-i18n="login.register">注册新学校</a>
         </div>
     </div>
 
@@ -172,12 +192,12 @@
         const password = document.getElementById('password').value;
 
         if (!username || !password) {
-            showError('请填写用户名和密码');
+            showError(t('login.errEmptyFields'));
             return;
         }
 
         btn.disabled = true;
-        btn.textContent = '登录中...';
+        btn.textContent = t('login.submitting');
 
         try {
             // OAuth2PasswordRequestForm 要求 application/x-www-form-urlencoded
@@ -200,7 +220,7 @@
                 } else if (detail && typeof detail === 'object') {
                     detail = JSON.stringify(detail);
                 }
-                showError(detail || `登录失败 (HTTP ${response.status})`);
+                showError(detail || t('login.errFailed', { status: response.status }));
                 return;
             }
 
@@ -221,10 +241,10 @@
             }
 
         } catch (err) {
-            showError('网络错误，请检查后端服务是否启动');
+            showError(t('login.errNetwork'));
         } finally {
             btn.disabled = false;
-            btn.textContent = '登 录';
+            btn.textContent = t('login.submit');
         }
     }
 

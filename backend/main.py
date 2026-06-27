@@ -100,6 +100,10 @@ def serve_login():
 def serve_auth_guard():
     return FileResponse(os.path.join(FRONTEND_DIR, "auth_guard.js"), headers={"Cache-Control": "no-store"})
 
+@app.get("/i18n.js")
+def serve_i18n():
+    return FileResponse(os.path.join(FRONTEND_DIR, "i18n.js"), headers={"Cache-Control": "no-store"})
+
 @app.get("/admin_dashboard.html")
 def serve_admin_dashboard():
     return FileResponse(os.path.join(FRONTEND_DIR, "admin_dashboard.html"), headers={"Cache-Control": "no-store"})

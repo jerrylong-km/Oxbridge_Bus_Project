@@ -2,7 +2,8 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    
+
+    <script src="/i18n.js"></script>
     <script src="auth_guard.js?v=2"></script>
     <script>
         // 内联鉴权：立即执行，不依赖外部文件缓存
@@ -20,7 +21,7 @@
     </script>
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Oxbridge Academy - 超級管理員審核工作台</title>
+    <title data-i18n-doctitle="admin.pageTitle">Oxbridge Academy - 超級管理員審核工作台</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Noto+Sans+TC:wght@300;500;700&display=swap" rel="stylesheet">
     
     <style>
@@ -293,38 +294,53 @@
             margin-bottom: 20px;
             color: rgba(255, 255, 255, 0.1);
         }
+
+        .lang-switch {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            color: #e0e0e0;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-left: 12px;
+        }
+        .lang-switch:hover { background: rgba(255, 255, 255, 0.15); }
     </style>
 </head>
 <body>
 
     <header>
         <div class="logo-area">
-            <h1>OXBRIDGE WORKBENCH</h1>
+            <h1 data-i18n="admin.headerTitle">OXBRIDGE WORKBENCH</h1>
         </div>
         <div class="user-info">
-            <i class="fa-solid fa-user-shield"></i>當前權限：超級管理員 (SuperAdmin)
+            <i class="fa-solid fa-user-shield"></i><span data-i18n="admin.currentRole">當前權限：超級管理員 (SuperAdmin)</span>
             <button onclick="handleLogout()" style="margin-left:16px;padding:6px 12px;border-radius:6px;border:1px solid var(--accent-red);background:transparent;color:var(--accent-red);cursor:pointer;font-size:12px;">
-                <i class="fa-solid fa-right-from-bracket"></i> 登出
+                <i class="fa-solid fa-right-from-bracket"></i> <span data-i18n="admin.logout">登出</span>
             </button>
+            <button class="lang-switch" onclick="I18n.toggle()" data-i18n="common.langSwitch">English</button>
         </div>
     </header>
 
     <main>
         <h2 class="workbench-title">
-            <i class="fa-solid fa-layer-group"></i> 租戶開通審核工作台
+            <i class="fa-solid fa-layer-group"></i> <span data-i18n="admin.workbenchTitle">租戶開通審核工作台</span>
         </h2>
 
         <div class="stats-grid">
             <div class="stat-card pending">
                 <div>
-                    <div style="color: var(--text-muted); font-size: 14px;">待處理申請</div>
+                    <div style="color: var(--text-muted); font-size: 14px;" data-i18n="admin.pendingLabel">待處理申請</div>
                     <div class="stat-number" id="pending-count">0</div>
                 </div>
                 <i class="fa-solid fa-clock-rotate-left" style="font-size: 32px; color: var(--accent-blue);"></i>
             </div>
             <div class="stat-card active">
                 <div>
-                    <div style="color: var(--text-muted); font-size: 14px;">已開通租戶</div>
+                    <div style="color: var(--text-muted); font-size: 14px;" data-i18n="admin.activeLabel">已開通租戶</div>
                     <div class="stat-number" id="active-count">0</div>
                 </div>
                 <i class="fa-solid fa-building-circle-check" style="font-size: 32px; color: var(--accent-green);"></i>
@@ -333,17 +349,17 @@
 
         <div class="table-container">
             <div id="loading-view" style="text-align: center; padding: 20px; color: var(--accent-blue);">
-                <i class="fa-solid fa-spinner fa-spin"></i> 正在連線路網資料庫...
+                <i class="fa-solid fa-spinner fa-spin"></i> <span data-i18n="admin.loading">正在連線路網資料庫...</span>
             </div>
-            
+
             <table id="schools-table" style="display: none;">
                 <thead>
                     <tr>
-                        <th>學校編號</th>
-                        <th>學校名稱</th>
-                        <th>主校區地址</th>
-                        <th>目前狀態</th>
-                        <th style="text-align: right;">決策操作</th>
+                        <th data-i18n="admin.thSchoolId">學校編號</th>
+                        <th data-i18n="admin.thSchoolName">學校名稱</th>
+                        <th data-i18n="admin.thAddress">主校區地址</th>
+                        <th data-i18n="admin.thStatus">目前狀態</th>
+                        <th style="text-align: right;" data-i18n="admin.thActions">決策操作</th>
                     </tr>
                 </thead>
                 <tbody id="schools-tbody">
@@ -352,27 +368,27 @@
 
             <div id="empty-view" class="empty-state" style="display: none;">
                 <i class="fa-regular fa-folder-open"></i>
-                <p>完美！目前沒有任何待審核的學校申請。</p>
+                <p data-i18n="admin.emptyPending">完美！目前沒有任何待審核的學校申請。</p>
             </div>
         </div>
 
         <!-- 已開通 / 已暫停 租戶管理 -->
         <h2 class="section-title">
-            <i class="fa-solid fa-users-gear"></i> 已開通租戶管理
+            <i class="fa-solid fa-users-gear"></i> <span data-i18n="admin.managedTitle">已開通租戶管理</span>
         </h2>
         <div class="table-container">
             <div id="managed-loading-view" style="text-align: center; padding: 20px; color: var(--accent-green);">
-                <i class="fa-solid fa-spinner fa-spin"></i> 正在載入租戶清單...
+                <i class="fa-solid fa-spinner fa-spin"></i> <span data-i18n="admin.managedLoading">正在載入租戶清單...</span>
             </div>
 
             <table id="managed-table" style="display: none;">
                 <thead>
                     <tr>
-                        <th>學校編號</th>
-                        <th>學校名稱</th>
-                        <th>管理員帳號</th>
-                        <th>目前狀態</th>
-                        <th style="text-align: right;">租戶操作</th>
+                        <th data-i18n="admin.thSchoolId">學校編號</th>
+                        <th data-i18n="admin.thSchoolName">學校名稱</th>
+                        <th data-i18n="admin.thAdminAccount">管理員帳號</th>
+                        <th data-i18n="admin.thStatus">目前狀態</th>
+                        <th style="text-align: right;" data-i18n="admin.thTenantActions">租戶操作</th>
                     </tr>
                 </thead>
                 <tbody id="managed-tbody"></tbody>
@@ -380,7 +396,7 @@
 
             <div id="managed-empty-view" class="empty-state" style="display: none;">
                 <i class="fa-regular fa-building"></i>
-                <p>目前還沒有已開通的租戶。</p>
+                <p data-i18n="admin.managedEmpty">目前還沒有已開通的租戶。</p>
             </div>
         </div>
     </main>
@@ -412,7 +428,7 @@
                 });
 
                 if (response.status === 401 || response.status === 403) {
-                    alert('登录已过期，请重新登录');
+                    alert(t('admin.sessionExpired'));
                     handleLogout();
                     return;
                 }
@@ -441,15 +457,15 @@
                     row.innerHTML = `
                         <td style="font-family: 'Orbitron', sans-serif; color: var(--accent-blue);">#00${schoolId}</td>
                         <td style="font-weight: 700;">${school.school_name}</td>
-                        <td><i class="fa-solid fa-location-dot" style="color: var(--text-muted); margin-right:6px;"></i>${school.address || '無地址資訊'}</td>
-                        <td><span class="badge">待審核</span></td>
+                        <td><i class="fa-solid fa-location-dot" style="color: var(--text-muted); margin-right:6px;"></i>${school.address || t('admin.noAddress')}</td>
+                        <td><span class="badge">${t('admin.badgePending')}</span></td>
                         <td style="text-align: right;">
                             <div class="btn-group" style="justify-content: flex-end;">
                                 <button class="btn btn-approve" onclick="executeReview(${schoolId}, '已通过')">
-                                    <i class="fa-solid fa-check"></i> 批准開通
+                                    <i class="fa-solid fa-check"></i> ${t('admin.btnApprove')}
                                 </button>
                                 <button class="btn btn-reject" onclick="executeReview(${schoolId}, '已拒绝')">
-                                    <i class="fa-solid fa-xmark"></i> 駁回申請
+                                    <i class="fa-solid fa-xmark"></i> ${t('admin.btnReject')}
                                 </button>
                             </div>
                         </td>
@@ -459,7 +475,7 @@
 
             } catch (error) {
                 console.error("拉取數據失敗:", error);
-                document.getElementById("loading-view").innerText = "連線後端資料庫失敗，請確認 FastAPI 服務已啟動。";
+                document.getElementById("loading-view").innerText = t('admin.loadFailed');
             }
         }
 
@@ -467,7 +483,7 @@
         async function executeReview(schoolId, decision) {
             let reason = null;
             if (decision === '已拒绝') {
-                reason = prompt("請輸入拒絕開通的具體原因：");
+                reason = prompt(t('admin.rejectReason'));
                 if (reason === null) return; // 使用者點擊取消，中止操作
             }
 
@@ -484,7 +500,7 @@
 
                 const result = await response.json();
                 if (response.ok) {
-                    alert(`操作成功：${result.message}`);
+                    alert(t('admin.successPrefix') + result.message);
                     fetchPendingSchools(); // 重新整理待審列表
                     fetchManagedSchools(); // 批准後該校會進入已開通列表
                 } else {
@@ -495,10 +511,10 @@
                     } else if (detail && typeof detail === 'object') {
                         detail = JSON.stringify(detail);
                     }
-                    alert(`操作失敗: ${detail ?? '未知錯誤 (HTTP ' + response.status + ')'}`);
+                    alert(t('admin.failPrefix') + (detail ?? 'Unknown error (HTTP ' + response.status + ')'));
                 }
             } catch (error) {
-                alert("發送審核決策時發生網路錯誤！");
+                alert(t('admin.networkError'));
             }
         }
 
@@ -537,15 +553,15 @@
                 schools.forEach(school => {
                     const isSuspended = school.approval_status === "已暂停";
                     const badgeClass = isSuspended ? "suspended" : "active";
-                    const badgeText = isSuspended ? "已暫停" : "運作中";
+                    const badgeText = isSuspended ? t('admin.badgeSuspended') : t('admin.badgeActive');
 
                     // 暫停中顯示「恢復」按鈕，運作中顯示「暫停」按鈕
                     const toggleBtn = isSuspended
                         ? `<button class="btn btn-resume" onclick="toggleStatus(${school.school_id}, 'resume')">
-                               <i class="fa-solid fa-play"></i> 恢復
+                               <i class="fa-solid fa-play"></i> ${t('admin.btnResume')}
                            </button>`
                         : `<button class="btn btn-suspend" onclick="toggleStatus(${school.school_id}, 'suspend')">
-                               <i class="fa-solid fa-pause"></i> 暫停
+                               <i class="fa-solid fa-pause"></i> ${t('admin.btnSuspend')}
                            </button>`;
 
                     const row = document.createElement("tr");
@@ -561,7 +577,7 @@
                             <div class="btn-group" style="justify-content: flex-end;">
                                 ${toggleBtn}
                                 <button class="btn btn-delete" onclick="deleteSchool(${school.school_id}, '${(school.school_name || '').replace(/'/g, "\\'")}')">
-                                    <i class="fa-solid fa-trash"></i> 刪除
+                                    <i class="fa-solid fa-trash"></i> ${t('admin.btnDelete')}
                                 </button>
                             </div>
                         </td>
@@ -571,15 +587,15 @@
 
             } catch (error) {
                 console.error("拉取租戶清單失敗:", error);
-                document.getElementById("managed-loading-view").innerText = "載入租戶清單失敗，請確認後端服務已啟動。";
+                document.getElementById("managed-loading-view").innerText = t('admin.managedLoadFailed');
             }
         }
 
         // 暫停 / 恢復租戶
         async function toggleStatus(schoolId, action) {
-            const actionText = action === 'suspend' ? '暫停' : '恢復';
+            const actionText = action === 'suspend' ? t('admin.btnSuspend') : t('admin.btnResume');
             if (action === 'suspend' &&
-                !confirm(`確定要暫停該租戶嗎？暫停後其管理員將無法登入系統。`)) {
+                !confirm(t('admin.confirmSuspend'))) {
                 return;
             }
 
@@ -591,19 +607,19 @@
                 });
                 const result = await response.json();
                 if (response.ok) {
-                    alert(`操作成功：${result.message}`);
+                    alert(t('admin.successPrefix') + result.message);
                     fetchManagedSchools();
                 } else {
-                    alert(`${actionText}失敗：${result.detail ?? '未知錯誤'}`);
+                    alert(t('admin.failPrefix') + (result.detail ?? 'Unknown error'));
                 }
             } catch (error) {
-                alert(`執行${actionText}操作時發生網路錯誤！`);
+                alert(t('admin.networkError'));
             }
         }
 
         // 刪除租戶（二次確認，避免誤刪）
         async function deleteSchool(schoolId, schoolName) {
-            if (!confirm(`⚠️ 危險操作！\n\n確定要永久刪除租戶「${schoolName}」嗎？\n該校的所有管理員、學生與路線資料都將一併刪除，此操作無法復原。`)) {
+            if (!confirm(t('admin.confirmDelete', { name: schoolName }))) {
                 return;
             }
 
@@ -614,15 +630,21 @@
                 });
                 const result = await response.json();
                 if (response.ok) {
-                    alert(`刪除成功：${result.message}`);
+                    alert(t('admin.successPrefix') + result.message);
                     fetchManagedSchools();
                 } else {
-                    alert(`刪除失敗：${result.detail ?? '未知錯誤'}`);
+                    alert(t('admin.failPrefix') + (result.detail ?? 'Unknown error'));
                 }
             } catch (error) {
-                alert("執行刪除操作時發生網路錯誤！");
+                alert(t('admin.networkError'));
             }
         }
+
+        // 语言切换后重新渲染动态内容
+        window.addEventListener('languagechange', () => {
+            fetchPendingSchools();
+            fetchManagedSchools();
+        });
     </script>
 </body>
 </html>
