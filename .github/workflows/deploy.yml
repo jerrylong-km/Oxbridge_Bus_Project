@@ -9,18 +9,12 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Check secret length
-        run: |
-          echo "DEPLOY_KEY length: ${#DEPLOY_KEY}"
-        env:
-          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
-
       - name: Deploy to server via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: 32.196.206.135
           username: ec2-user
-          key: ${{ secrets.DEPLOY_KEY }}
+          key: ${{ secrets.LIGHTSAIL_DEPLOY_KEY }}
           script: |
             cd /home/ec2-user/school_bus_routes
             git fetch origin
