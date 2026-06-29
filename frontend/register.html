@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n-doctitle="register.pageTitle">SaaS平台入驻申请 - 智慧校车系统</title>
+    <script src="/i18n.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .lang-switch {
+            position: fixed;
+            top: 16px;
+            right: 16px;
+            z-index: 50;
+            background: rgba(0,0,0,0.06);
+            border: 1px solid rgba(0,0,0,0.12);
+            color: #374151;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .lang-switch:hover { background: rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body class="bg-gray-50 flex items-center justify-center min-h-screen">
+
+    <button class="lang-switch" onclick="I18n.toggle()" data-i18n="common.langSwitch">English</button>
+
+    <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
+        <h2 class="text-2xl font-bold text-gray-800 text-center mb-6" data-i18n="register.title">申请入驻校车系统</h2>
+
+        <form id="registerForm" class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700" data-i18n="register.schoolName">学校名称</label>
+                <input type="text" id="school_name" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700" data-i18n="register.address">学校地址 (输入时自动补全)</label>
+                <input type="text" id="address" required data-i18n-placeholder="register.addressPlaceholder" placeholder="开始输入学校地址..." class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+            </div>
+
+            <div class="flex space-x-4">
+                <div class="w-1/2">
+                    <label class="block text-xs text-gray-500" data-i18n="register.latAuto">自动抓取纬度</label>
+                    <input type="text" id="lat" readonly class="mt-1 block w-full bg-gray-100 px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-500">
+                </div>
+                <div class="w-1/2">
+                    <label class="block text-xs text-gray-500" data-i18n="register.lngAuto">自动抓取经度</label>
+                    <input type="text" id="lng" readonly class="mt-1 block w-full bg-gray-100 px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-500">
+                </div>
+            </div>
+
+            <hr class="my-4">
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700" data-i18n="register.adminUsername">管理员用户名</label>
+                <input type="text" id="username" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700" data-i18n="register.adminEmail">管理员邮箱</label>
+                <input type="email" id="email" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700" data-i18n="register.password">登录密码</label>
+                <input type="password" id="password" required minlength="6" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700" data-i18n="register.passwordConfirm">确认密码</label>
+                <input type="password" id="password_confirm" required minlength="6" data-i18n-placeholder="register.passwordConfirmPlaceholder" placeholder="请再次输入密码" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm">
+                <p id="pwdHint" class="mt-1 text-xs text-red-600 hidden" data-i18n="register.pwdMismatch">两次输入的密码不一致</p>
+            </div>
+
+            <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none" data-i18n="register.submit">
+                提交申请
+            </button>
+        </form>
+        <p id="messageBox" class="mt-4 text-center text-sm font-bold hidden"></p>
+    </div>
+
+    <script src="/frontend/config.js"></script>
+    <script>
+        // 动态加载 Google Maps（从 config.js 读取 key）
+        (function() {
+            var key = window.GOOGLE_MAPS_API_KEY || '';
+            if (key && key.indexOf('YOUR_') === -1) {
+                var s = document.createElement('script');
+                s.src = 'https://maps.googleapis.com/maps/api/js?key=' + key + '&libraries=places&callback=initAutocomplete';
+                s.async = true; s.defer = true;
+                document.body.appendChild(s);
+            }
+        })();
+    </script>
+    
+    <script>
+    // 2. 初始化地址补全功能
+    function initAutocomplete() {
+        const input = document.getElementById('address');
+        const autocomplete = new google.maps.places.Autocomplete(input);
+
+        autocomplete.addListener('place_changed', function() {
+            const place = autocomplete.getPlace();
+            if (!place.geometry) {
+                console.error("地址解析失败，请重新选择");
+                return;
+            }
+            document.getElementById('lat').value = place.geometry.location.lat();
+            document.getElementById('lng').value = place.geometry.location.lng();
+        });
+    }
+    
+    window.onload = initAutocomplete;
+
+    // 实时比对两次密码，给出即时提示
+    const pwdEl = document.getElementById('password');
+    const pwdConfirmEl = document.getElementById('password_confirm');
+    const pwdHint = document.getElementById('pwdHint');
+    function checkPwdMatch() {
+        if (pwdConfirmEl.value && pwdEl.value !== pwdConfirmEl.value) {
+            pwdHint.classList.remove('hidden');
+        } else {
+            pwdHint.classList.add('hidden');
+        }
+    }
+    pwdEl.addEventListener('input', checkPwdMatch);
+    pwdConfirmEl.addEventListener('input', checkPwdMatch);
+
+    // 3. 拦截表单提交，加固数据校验
+    document.getElementById('registerForm').addEventListener('submit', async function(e) {
+        e.preventDefault(); 
+        
+        // 显式读取所有字段
+        const schoolName = document.getElementById('school_name').value;
+        const address = document.getElementById('address').value;
+        const lat = document.getElementById('lat').value;
+        const lng = document.getElementById('lng').value;
+        const username = document.getElementById('username').value;
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const passwordConfirm = document.getElementById('password_confirm').value;
+
+        // 两次密码必须一致
+        if (password !== passwordConfirm) {
+            alert(t('register.errPwdMismatch'));
+            return;
+        }
+
+        // 【调试透视镜】：这里会把发送前的数据包打印在 F12 控制台，一目了然
+        const data = {
+            school_name: schoolName,
+            address: address,
+            latitude: parseFloat(lat),
+            longitude: parseFloat(lng),
+            username: username,
+            email: email,
+            password: password
+        };
+        
+        console.log("即将发送的完整数据包:", data);
+
+        // 强校验：如果任何一个字段为空，直接拦截，不发给后端
+        if (!schoolName || !username || !email || !password || !lat || !lng) {
+            alert(t('register.errMissingFields'));
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/register_school', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            
+            const result = await response.json();
+            const messageBox = document.getElementById('messageBox');
+            messageBox.classList.remove('hidden');
+            
+            if (response.ok) {
+                messageBox.className = "mt-4 text-center text-sm font-bold text-green-600";
+                messageBox.innerText = result.message;
+                document.getElementById('registerForm').reset();
+            } else {
+                // 如果后端再次报错，直接显示报错内容
+                messageBox.className = "mt-4 text-center text-sm font-bold text-red-600";
+                messageBox.innerText = t('register.failPrefix') + JSON.stringify(result.detail || result);
+            }
+        } catch (error) {
+            console.error("网络连接错误:", error);
+            alert(t('register.errNetwork', { name: error.name, message: error.message }));
+        }
+    });
+</script>
+</body>
+</html>

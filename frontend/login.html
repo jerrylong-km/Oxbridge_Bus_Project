@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n-doctitle="login.pageTitle">登录 — 智慧校车 SaaS 平台</title>
+    <script src="/i18n.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        .lang-switch {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            color: #e0e0e0;
+            padding: 7px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .lang-switch:hover { background: rgba(255, 255, 255, 0.15); }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            color: #e0e0e0;
+        }
+
+        .login-container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 48px 40px;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 36px;
+        }
+
+        .login-header .icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+
+        .login-header h1 {
+            font-size: 22px;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .login-header p {
+            font-size: 14px;
+            color: #94a3b8;
+            margin-top: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: #94a3b8;
+            margin-bottom: 6px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 8px;
+            font-size: 15px;
+            color: #ffffff;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            outline: none;
+        }
+
+        .form-group input:focus {
+            border-color: #38bdf8;
+            box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+        }
+
+        .form-group input::placeholder {
+            color: #64748b;
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 13px;
+            background: linear-gradient(135deg, #0ea5e9, #2563eb);
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            color: #ffffff;
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.1s;
+            margin-top: 8px;
+        }
+
+        .btn-login:hover { opacity: 0.9; }
+        .btn-login:active { transform: scale(0.98); }
+        .btn-login:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .error-msg {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            margin-bottom: 16px;
+            display: none;
+        }
+
+        .footer-links {
+            text-align: center;
+            margin-top: 24px;
+            font-size: 13px;
+        }
+
+        .footer-links a {
+            color: #38bdf8;
+            text-decoration: none;
+        }
+
+        .footer-links a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <button class="lang-switch" id="langSwitch" onclick="I18n.toggle()" data-i18n="common.langSwitch">English</button>
+    <div class="login-container">
+        <div class="login-header">
+            <div class="icon">🚌</div>
+            <h1 data-i18n="login.title">智慧校车管理平台</h1>
+            <p data-i18n="login.subtitle">请输入您的账号和密码登录系统</p>
+        </div>
+
+        <div class="error-msg" id="errorMsg"></div>
+
+        <form id="loginForm" onsubmit="handleLogin(event)">
+            <div class="form-group">
+                <label for="username" data-i18n="login.username">用户名</label>
+                <input type="text" id="username" name="username"
+                       data-i18n-placeholder="login.usernamePlaceholder"
+                       placeholder="请输入用户名" required autocomplete="username">
+            </div>
+            <div class="form-group">
+                <label for="password" data-i18n="login.password">密码</label>
+                <input type="password" id="password" name="password"
+                       data-i18n-placeholder="login.passwordPlaceholder"
+                       placeholder="请输入密码" required autocomplete="current-password">
+            </div>
+            <button type="submit" class="btn-login" id="btnLogin" data-i18n="login.submit">登 录</button>
+        </form>
+
+        <div class="footer-links">
+            <span data-i18n="login.noAccount">还没有账号？</span><a href="/register.html" data-i18n="login.register">注册新学校</a>
+        </div>
+    </div>
+
+    <script>
+    async function handleLogin(e) {
+        e.preventDefault();
+
+        const errorEl = document.getElementById('errorMsg');
+        const btn = document.getElementById('btnLogin');
+        errorEl.style.display = 'none';
+
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value;
+
+        if (!username || !password) {
+            showError(t('login.errEmptyFields'));
+            return;
+        }
+
+        btn.disabled = true;
+        btn.textContent = t('login.submitting');
+
+        try {
+            // OAuth2PasswordRequestForm 要求 application/x-www-form-urlencoded
+            const formData = new URLSearchParams();
+            formData.append('username', username);
+            formData.append('password', password);
+
+            const response = await fetch('/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: formData,
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                let detail = result.detail;
+                if (Array.isArray(detail)) {
+                    detail = detail.map(e => e.msg).join('; ');
+                } else if (detail && typeof detail === 'object') {
+                    detail = JSON.stringify(detail);
+                }
+                showError(detail || t('login.errFailed', { status: response.status }));
+                return;
+            }
+
+            // 登录成功 — 存储 Token 和用户信息
+            localStorage.setItem('access_token', result.access_token);
+            localStorage.setItem('user_role', result.role);
+            localStorage.setItem('username', result.username);
+            if (result.school_id) {
+                localStorage.setItem('school_id', result.school_id);
+            }
+
+            // 根据角色跳转到不同页面
+            if (result.role === 'SuperAdmin') {
+                window.location.href = '/admin_dashboard.html';
+            } else {
+                // SchoolAdmin 跳转到校车线路管理页
+                window.location.href = '/school_dashboard.html';
+            }
+
+        } catch (err) {
+            showError(t('login.errNetwork'));
+        } finally {
+            btn.disabled = false;
+            btn.textContent = t('login.submit');
+        }
+    }
+
+    function showError(msg) {
+        const el = document.getElementById('errorMsg');
+        el.textContent = msg;
+        el.style.display = 'block';
+    }
+
+    // 如果已登录且 token 有效，直接跳转
+    (async function checkExistingToken() {
+        const token = localStorage.getItem('access_token');
+        const role = localStorage.getItem('user_role');
+        if (!token || !role) return;
+
+        // 向后端验证 token 是否仍然有效
+        try {
+            const res = await fetch('/api/me', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            if (!res.ok) throw new Error('token invalid');
+
+            // token 有效，跳转到对应页面
+            if (role === 'SuperAdmin') {
+                window.location.href = '/admin_dashboard.html';
+            } else {
+                window.location.href = '/school_dashboard.html';
+            }
+        } catch (e) {
+            // token 过期或无效，清除并留在登录页
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('user_role');
+            localStorage.removeItem('username');
+            localStorage.removeItem('school_id');
+        }
+    })();
+    </script>
+</body>
+</html>
