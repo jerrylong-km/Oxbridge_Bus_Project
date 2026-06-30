@@ -130,6 +130,8 @@
         /* ===== 右侧地图 ===== */
         #map { flex: 1; height: 100%; }
         #map .map-fallback { color: #fca5a5; padding: 40px; font-size: 15px; line-height: 1.8; }
+        #map-comparison { flex: 1; height: 100%; display: none; flex-direction: row; }
+        #map[style*="display: none"] { flex: 0; }
 
         /* 线路时间输入区 */
         .line-time-row {
@@ -634,6 +636,23 @@
 
     <div id="map"></div>
 
+    <!-- Tab3 分屏地图容器（切换到对比Tab时显示） -->
+    <div id="map-comparison">
+        <div id="map-left" style="flex:1;height:100%;position:relative;">
+            <div style="position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:10;
+                        background:rgba(15,23,42,0.78);color:#c7d2fe;padding:4px 14px;
+                        border-radius:6px;font-size:12px;pointer-events:none;white-space:nowrap;"
+                 data-i18n="sd.mapLabelExisting">现有路线</div>
+        </div>
+        <div style="width:2px;height:100%;background:#334155;flex-shrink:0;"></div>
+        <div id="map-right" style="flex:1;height:100%;position:relative;">
+            <div style="position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:10;
+                        background:rgba(15,23,42,0.78);color:#c7d2fe;padding:4px 14px;
+                        border-radius:6px;font-size:12px;pointer-events:none;white-space:nowrap;"
+                 data-i18n="sd.mapLabelOptimized">优化后路线</div>
+        </div>
+    </div>
+
     <!-- 本地密钥配置 (config.js 已被 .gitignore 屏蔽)，必须在主脚本之前加载 -->
     <script src="/frontend/config.js"></script>
     <script>
@@ -659,6 +678,14 @@
         let schoolMarker = null;
         let currentMode = 'existing'; // 当前激活的 tab
 
+        // Tab3 分屏地图
+        let mapLeft  = null;
+        let mapRight = null;
+        let compLeftPolylines  = [];
+        let compRightPolylines = [];
+        let compLeftMarkers    = [];
+        let compRightMarkers   = [];
+
         // 隐藏/显示现有路线层（stopMarkers + routePolylines）
         function setExistingLayerVisible(visible) {
             stopMarkers.forEach(m => m.setMap(visible ? map : null));
@@ -683,9 +710,17 @@
             document.getElementById('panel-optimized').style.display = mode === 'optimized' ? 'block' : 'none';
             document.getElementById('panel-comparison').style.display = mode === 'comparison' ? 'block' : 'none';
 
-            // 切换地图层
+            // 切换地图区域（单图 vs 分屏）
+            const isComparison = mode === 'comparison';
+            document.getElementById('map').style.display            = isComparison ? 'none'  : 'block';
+            document.getElementById('map-comparison').style.display = isComparison ? 'flex' : 'none';
+
+            // 切换单图图层
             setExistingLayerVisible(mode === 'existing');
             setOptLayerVisible(mode === 'optimized');
+
+            // 分屏地图在切入时初始化/刷新
+            if (isComparison) initComparisonMaps();
         }
 
         // ===== 地图初始化（Google Maps callback）=====
@@ -1032,6 +1067,7 @@
             // 清除旧路线
             routePolylines.forEach(p => p.setMap(null));
             routePolylines.length = 0;
+            clearComparisonLayers(); // 分屏图层同步清除，下次切 Tab3 时重建
 
             // 筛选有坐标站点的线路
             const validLines = lines.filter(ln =>
@@ -2020,7 +2056,7 @@
                 // 清除旧路线
                 optPolylines.forEach(p => p.setMap(null));
                 optPolylines = [];
-
+                clearComparisonLayers(); // 分屏图层同步清除，下次切 Tab3 时重建
                 const morningEntries   = Object.entries(data.routes.morning);
                 const afternoonEntries = Object.entries(data.routes.afternoon);
 
@@ -2233,6 +2269,108 @@
         }
 
         // --- Tab3：优化前后完整对比 ---
+        // ===== Tab3 分屏地图 =====
+        const MAP_STYLES = [
+            { elementType: "geometry", stylers: [{ color: "#242f3e" }] },
+            { elementType: "labels.text.fill", stylers: [{ color: "#746855" }] },
+            { elementType: "labels.text.stroke", stylers: [{ color: "#242f3e" }] },
+            { featureType: "road", elementType: "geometry", stylers: [{ color: "#38414e" }] },
+            { featureType: "water", elementType: "geometry", stylers: [{ color: "#17263c" }] },
+        ];
+
+        function initComparisonMaps() {
+            const center = map.getCenter();
+            const zoom   = map.getZoom();
+            if (!mapLeft) {
+                mapLeft  = new google.maps.Map(document.getElementById('map-left'),  { center, zoom, styles: MAP_STYLES });
+                mapRight = new google.maps.Map(document.getElementById('map-right'), { center, zoom, styles: MAP_STYLES });
+            }
+            renderComparisonLayers();
+        }
+
+        function renderComparisonLayers() {
+            // 清除旧分屏图层
+            compLeftPolylines.forEach(p => p.setMap(null));
+            compRightPolylines.forEach(p => p.setMap(null));
+            compLeftMarkers.forEach(m => m.setMap(null));
+            compRightMarkers.forEach(m => m.setMap(null));
+            compLeftPolylines = []; compRightPolylines = [];
+            compLeftMarkers = []; compRightMarkers = [];
+
+            // --- 左图：现有路线 polylines ---
+            routePolylines.forEach(p => {
+                compLeftPolylines.push(new google.maps.Polyline({
+                    path: p.getPath().getArray(),
+                    strokeColor:   p.get('strokeColor'),
+                    strokeOpacity: p.get('strokeOpacity'),
+                    strokeWeight:  p.get('strokeWeight'),
+                    icons: p.get('icons'),
+                    map: mapLeft,
+                }));
+            });
+
+            // --- 左图：现有站点 markers ---
+            stopMarkers.forEach(m => {
+                compLeftMarkers.push(new google.maps.Marker({
+                    position: m.getPosition(),
+                    icon:  m.getIcon(),
+                    label: m.getLabel(),
+                    title: m.getTitle(),
+                    map: mapLeft,
+                }));
+            });
+
+            // --- 右图：优化路线 polylines ---
+            optPolylines.forEach(p => {
+                compRightPolylines.push(new google.maps.Polyline({
+                    path: p.getPath().getArray(),
+                    strokeColor:   p.get('strokeColor'),
+                    strokeOpacity: p.get('strokeOpacity'),
+                    strokeWeight:  p.get('strokeWeight'),
+                    icons: p.get('icons'),
+                    map: mapRight,
+                }));
+            });
+
+            // --- 右图：优化站点 markers（不含学生 optMarkers）---
+            optStopMarkers.forEach(m => {
+                compRightMarkers.push(new google.maps.Marker({
+                    position: m.getPosition(),
+                    icon:  m.getIcon(),
+                    label: m.getLabel(),
+                    title: m.getTitle(),
+                    map: mapRight,
+                }));
+            });
+
+            // 学校标记（两图各一个）
+            if (schoolMarker) {
+                const pos  = schoolMarker.getPosition();
+                const icon = schoolMarker.getIcon();
+                const title = schoolMarker.getTitle();
+                compLeftMarkers.push(new google.maps.Marker({ position: pos, icon, title, map: mapLeft }));
+                compRightMarkers.push(new google.maps.Marker({ position: pos, icon, title, map: mapRight }));
+            }
+
+            // 自动调整视野
+            const boundsL = new google.maps.LatLngBounds();
+            compLeftMarkers.forEach(m => boundsL.extend(m.getPosition()));
+            if (!boundsL.isEmpty()) mapLeft.fitBounds(boundsL);
+
+            const boundsR = new google.maps.LatLngBounds();
+            compRightMarkers.forEach(m => boundsR.extend(m.getPosition()));
+            if (!boundsR.isEmpty()) mapRight.fitBounds(boundsR);
+        }
+
+        function clearComparisonLayers() {
+            compLeftPolylines.forEach(p => p.setMap(null));
+            compRightPolylines.forEach(p => p.setMap(null));
+            compLeftMarkers.forEach(m => m.setMap(null));
+            compRightMarkers.forEach(m => m.setMap(null));
+            compLeftPolylines = []; compRightPolylines = [];
+            compLeftMarkers = []; compRightMarkers = [];
+        }
+
         function renderFullComparison() {
             const container = document.getElementById('comparison-panel-content');
             const hasExisting = Object.keys(routeStats).length > 0;

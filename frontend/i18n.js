@@ -254,6 +254,8 @@
             'sd.compLegendDecrease': '= decreased after optimization',
             'sd.compLegendIncrease': '= increased after optimization',
             'sd.compLegendNote': '(routes matched by geographic bearing)',
+            'sd.mapLabelExisting': 'Existing Routes',
+            'sd.mapLabelOptimized': 'Optimized Routes',
             // 个人信息模态框
             'sd.modalProfile': 'Profile',
             'sd.changeAvatar': 'Change Avatar',
@@ -504,6 +506,8 @@
             'sd.compLegendDecrease': '= 优化后减少',
             'sd.compLegendIncrease': '= 优化后增加',
             'sd.compLegendNote': '（线路匹配按地理方位自动对应）',
+            'sd.mapLabelExisting': '现有路线',
+            'sd.mapLabelOptimized': '优化后路线',
             'sd.modalProfile': '个人信息',
             'sd.changeAvatar': '更换头像',
             'sd.usernameReadonly': '用户名（不可修改）',

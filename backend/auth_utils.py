@@ -1,13 +1,11 @@
 import os
-from passlib.context import CryptContext
+import bcrypt
 from datetime import datetime, timedelta
 from jose import jwt
 from dotenv import load_dotenv
 
-# 从与本文件同目录（backend/）的 .env 加载环境变量，不依赖启动时的工作目录
 load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env"))
 
-# SECRET_KEY 必须通过环境变量提供，绝不硬编码进源码（防止密钥随代码泄露）
 SECRET_KEY = os.getenv("SECRET_KEY")
 if not SECRET_KEY:
     raise RuntimeError(
@@ -18,15 +16,17 @@ if not SECRET_KEY:
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
-# 同时支持 bcrypt（新账号默认）与 sha256_crypt（兼容历史账号，如早期注册接口生成的哈希）。
-# deprecated="auto" 会把非首选算法标记为过时，verify_password 仍能正确校验两种格式。
-pwd_context = CryptContext(schemes=["bcrypt", "sha256_crypt"], deprecated="auto")
-
 def verify_password(plain_password, hashed_password):
-    return pwd_context.verify(plain_password, hashed_password)
+    if isinstance(plain_password, str):
+        plain_password = plain_password.encode("utf-8")
+    if isinstance(hashed_password, str):
+        hashed_password = hashed_password.encode("utf-8")
+    return bcrypt.checkpw(plain_password, hashed_password)
 
 def get_password_hash(password):
-    return pwd_context.hash(password)
+    if isinstance(password, str):
+        password = password.encode("utf-8")
+    return bcrypt.hashpw(password, bcrypt.gensalt()).decode("utf-8")
 
 def create_access_token(data: dict):
     to_encode = data.copy()
