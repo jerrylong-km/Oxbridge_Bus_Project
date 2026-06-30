@@ -1,21 +1,24 @@
 # optimization.py — 校车线路优化算法模块
-# 从 assign_students.py / find_optimal_stops.py / calculate_routes.py 提取核心算法
-# 供 FastAPI 端点调用，不依赖文件系统 I/O
+# 所有数学模型与算法流程集中于此，main.py 只负责数据库读写和 HTTP 层。
+# 需要调整算法时只改此文件，无需修改 main.py。
 
 import math
 import itertools
+import datetime
 import numpy as np
 import requests
 
 # ============================================================================
-#  常量
+#  常量 — 坐标系
 # ============================================================================
 LAT_REF = 26.7
 LNG_SCALE = math.cos(math.radians(LAT_REF))  # 经度收缩系数 (~0.893)
 RANDOM_SEED = 42
 MAX_ITER = 100
 
-# --- 站点驾车时间约束（用于 find_optimal_stops 裂变逻辑） ---
+# ============================================================================
+#  常量 — 站点优化约束
+# ============================================================================
 MAX_DRIVE_MINUTES = 15      # 学生到站点的最大驾车时间（分钟）
 DRIVE_SPEED_KMH = 30        # 上午7点住宅区保守平均车速（km/h）
 DRIVE_DETOUR_FACTOR = 1.3   # 道路绕行系数（直线→实际路程）
@@ -23,6 +26,15 @@ DRIVE_DETOUR_FACTOR = 1.3   # 道路绕行系数（直线→实际路程）
 _MAX_RADIUS_KM = MAX_DRIVE_MINUTES / 60.0 * DRIVE_SPEED_KMH / DRIVE_DETOUR_FACTOR  # ≈5.77 km
 # 转为纬度收缩后的坐标系距离（1° ≈ 111 km）
 MAX_RADIUS_DEG = _MAX_RADIUS_KM / 111.0  # ≈0.0347°
+
+# ============================================================================
+#  常量 — 路线生成时间参数（美东夏令时 EDT = UTC-4）
+# ============================================================================
+ROUTE_TIMEZONE_OFFSET = -4   # EDT，学校所在时区（Florida）
+MORNING_HOUR   = 7            # 早上出发时刻（7:00 AM）
+MORNING_MINUTE = 0
+AFTERNOON_HOUR   = 16         # 下午出发时刻（4:00 PM）
+AFTERNOON_MINUTE = 0
 
 # ============================================================================
 #  工具函数
@@ -438,3 +450,127 @@ def geocode_address(address, api_key):
     except Exception:
         pass
     return None
+
+
+# ============================================================================
+#  5. 路线生成流程编排
+# ============================================================================
+
+def next_weekday_ts(hour, minute, weekday=0):
+    """计算下一个指定星期几（默认周一）指定时刻的 Unix 时间戳
+
+    Args:
+        hour: 小时（当地时间）
+        minute: 分钟
+        weekday: 目标星期几（0=周一 … 6=周日），默认 0（周一）
+
+    Returns:
+        int: Unix 时间戳（秒），基于 ROUTE_TIMEZONE_OFFSET 时区
+    """
+    tz = datetime.timezone(datetime.timedelta(hours=ROUTE_TIMEZONE_OFFSET))
+    now = datetime.datetime.now(tz)
+    days_ahead = (weekday - now.weekday()) % 7 or 7
+    target = (now + datetime.timedelta(days=days_ahead)).replace(
+        hour=hour, minute=minute, second=0, microsecond=0
+    )
+    return int(target.timestamp())
+
+
+def generate_zone_routes(zone_stops_map, school_point, api_key):
+    """对所有 zone 计算早上/下午双套最优路线及指标
+
+    Args:
+        zone_stops_map: dict，{ zone_name: [{"id", "stop_name", "lat", "lng",
+                                             "student_count", "sequence"}, ...] }
+                        每个 zone 的站点列表，已按 sequence 排序
+        school_point:   {"lat": float, "lng": float}，学校坐标
+        api_key:        Google Maps API Key（为空则使用模拟矩阵）
+
+    Returns:
+        route_data:   {"morning": {zone: [ordered_stops]}, "afternoon": {zone: [...]}}
+        metrics_data: {"morning": {zone: metrics, "grand_total": ...},
+                       "afternoon": {zone: metrics, "grand_total": ...}}
+        stop_sequences: {stop_id: new_sequence}  以早上路线为准的新站点序号
+    """
+    morning_ts   = next_weekday_ts(MORNING_HOUR,   MORNING_MINUTE)
+    afternoon_ts = next_weekday_ts(AFTERNOON_HOUR, AFTERNOON_MINUTE)
+
+    route_data    = {"morning": {}, "afternoon": {}}
+    metrics_data  = {"morning": {}, "afternoon": {}}
+    stop_sequences = {}          # stop_id → new_sequence（早上路线排序结果）
+
+    grand_sec_m = grand_met_m = 0
+    grand_sec_a = grand_met_a = 0
+
+    for zone, zone_stops in sorted(zone_stops_map.items()):
+        all_points = [school_point] + [{"lat": s["lat"], "lng": s["lng"]} for s in zone_stops]
+
+        # 早上 / 下午各取一次距离矩阵 + 求最优路径
+        time_mat_m, dist_mat_m = fetch_distance_matrix(all_points, api_key, morning_ts)
+        best_perm_m, min_sec_m = solve_open_route(time_mat_m)
+
+        time_mat_a, dist_mat_a = fetch_distance_matrix(all_points, api_key, afternoon_ts)
+        best_perm_a, min_sec_a = solve_open_route(time_mat_a)
+
+        def _build_ordered(perm):
+            idx_seq = list(perm) + [0] if perm else [0]
+            ordered = []
+            for idx in idx_seq:
+                if idx == 0:
+                    ordered.append({"name": "School",
+                                    "lat": school_point["lat"],
+                                    "lng": school_point["lng"]})
+                else:
+                    s = zone_stops[idx - 1]
+                    ordered.append({"id": s["id"],
+                                    "stop_name": s["stop_name"],
+                                    "lat": s["lat"],
+                                    "lng": s["lng"],
+                                    "student_count": s["student_count"]})
+            return ordered, idx_seq
+
+        def _build_metrics(perm, time_mat, dist_mat, min_sec):
+            _, idx_seq = _build_ordered(perm)
+            total_meters = 0
+            segments = []
+            for a, b in zip(idx_seq[:-1], idx_seq[1:]):
+                seg_m = dist_mat[a][b]
+                seg_s = time_mat[a][b]
+                total_meters += seg_m
+                segments.append({"km": round(seg_m / 1000, 2),
+                                  "minutes": round(seg_s / 60, 1)})
+            return {
+                "total_km": round(total_meters / 1000, 2),
+                "total_minutes": round(min_sec / 60, 1),
+                "num_stops": len(zone_stops),
+                "segments": segments,
+            }, total_meters
+
+        ordered_m, _ = _build_ordered(best_perm_m)
+        ordered_a, _ = _build_ordered(best_perm_a)
+        metrics_m, total_met_m = _build_metrics(best_perm_m, time_mat_m, dist_mat_m, min_sec_m)
+        metrics_a, total_met_a = _build_metrics(best_perm_a, time_mat_a, dist_mat_a, min_sec_a)
+
+        grand_sec_m += min_sec_m;  grand_met_m += total_met_m
+        grand_sec_a += min_sec_a;  grand_met_a += total_met_a
+
+        route_data["morning"][zone]    = ordered_m
+        route_data["afternoon"][zone]  = ordered_a
+        metrics_data["morning"][zone]  = metrics_m
+        metrics_data["afternoon"][zone] = metrics_a
+
+        # 记录早上路线决定的新站点序号（供调用方更新数据库）
+        for new_seq, idx in enumerate(best_perm_m or [], start=1):
+            stop_id = zone_stops[idx - 1]["id"]
+            stop_sequences[stop_id] = new_seq
+
+    metrics_data["morning"]["grand_total"] = {
+        "total_km": round(grand_met_m / 1000, 2),
+        "total_minutes": round(grand_sec_m / 60, 1),
+    }
+    metrics_data["afternoon"]["grand_total"] = {
+        "total_km": round(grand_met_a / 1000, 2),
+        "total_minutes": round(grand_sec_a / 60, 1),
+    }
+
+    return route_data, metrics_data, stop_sequences

@@ -921,19 +921,7 @@ def generate_optimized_routes(
     current_user: models.User = Depends(require_role("SchoolAdmin")),
     db: Session = Depends(get_db),
 ):
-    from optimization import fetch_distance_matrix, solve_open_route
-    import datetime
-
-    def _next_monday_ts(hour, minute):
-        # 用美东夏令时 (EDT = UTC-4) 计算下周一指定时刻的 UTC 时间戳
-        # Google Distance Matrix API 按坐标所在地时区解读 departure_time
-        edt = datetime.timezone(datetime.timedelta(hours=-4))
-        now = datetime.datetime.now(edt)
-        days_ahead = (7 - now.weekday()) % 7 or 7
-        target = (now + datetime.timedelta(days=days_ahead)).replace(
-            hour=hour, minute=minute, second=0, microsecond=0
-        )
-        return int(target.timestamp())
+    from optimization import generate_zone_routes
 
     school = db.query(models.School).filter(
         models.School.school_id == current_user.school_id
@@ -961,92 +949,28 @@ def generate_optimized_routes(
                         break
 
     school_point = {"lat": school.latitude, "lng": school.longitude}
-    zones = sorted(set(s.zone for s in stops))
 
-    morning_ts   = _next_monday_ts(7, 0)
-    afternoon_ts = _next_monday_ts(16, 0)
+    # 按 zone 分组，构造 optimization 模块所需的输入格式
+    zone_stops_map = {}
+    for s in sorted(stops, key=lambda x: x.sequence):
+        zone_stops_map.setdefault(s.zone, []).append({
+            "id": s.id,
+            "stop_name": s.stop_name,
+            "lat": s.latitude,
+            "lng": s.longitude,
+            "student_count": s.student_count,
+            "sequence": s.sequence,
+        })
 
-    route_data    = {"morning": {}, "afternoon": {}}
-    metrics_data  = {"morning": {}, "afternoon": {}}
-    grand_sec_m   = 0
-    grand_met_m   = 0
-    grand_sec_a   = 0
-    grand_met_a   = 0
+    # 调用算法模块完成所有路线计算
+    route_data, metrics_data, stop_sequences = generate_zone_routes(
+        zone_stops_map, school_point, api_key
+    )
 
-    for zone in zones:
-        zone_stops = [s for s in stops if s.zone == zone]
-        zone_stops.sort(key=lambda s: s.sequence)
-
-        all_points = [school_point] + [{"lat": s.latitude, "lng": s.longitude} for s in zone_stops]
-
-        # --- 早上 ---
-        time_mat_m, dist_mat_m = fetch_distance_matrix(all_points, api_key, morning_ts)
-        best_perm_m, min_sec_m = solve_open_route(time_mat_m)
-
-        # --- 下午 ---
-        time_mat_a, dist_mat_a = fetch_distance_matrix(all_points, api_key, afternoon_ts)
-        best_perm_a, min_sec_a = solve_open_route(time_mat_a)
-
-        def build_ordered_stops(perm):
-            idx_seq = list(perm) + [0] if perm else [0]
-            ordered = []
-            for idx in idx_seq:
-                if idx == 0:
-                    ordered.append({"name": "School", "lat": school.latitude, "lng": school.longitude})
-                else:
-                    s = zone_stops[idx - 1]
-                    ordered.append({
-                        "id": s.id,
-                        "stop_name": s.stop_name,
-                        "lat": s.latitude,
-                        "lng": s.longitude,
-                        "student_count": s.student_count,
-                    })
-            return ordered, idx_seq
-
-        def build_metrics(perm, time_mat, dist_mat, min_sec):
-            _, idx_seq = build_ordered_stops(perm)
-            total_meters = 0
-            segments = []
-            for a, b in zip(idx_seq[:-1], idx_seq[1:]):
-                seg_m = dist_mat[a][b]
-                seg_s = time_mat[a][b]
-                total_meters += seg_m
-                segments.append({"km": round(seg_m / 1000, 2), "minutes": round(seg_s / 60, 1)})
-            return {
-                "total_km": round(total_meters / 1000, 2),
-                "total_minutes": round(min_sec / 60, 1),
-                "num_stops": len(zone_stops),
-                "segments": segments,
-            }, total_meters
-
-        ordered_m, _ = build_ordered_stops(best_perm_m)
-        ordered_a, _ = build_ordered_stops(best_perm_a)
-        metrics_m, total_met_m = build_metrics(best_perm_m, time_mat_m, dist_mat_m, min_sec_m)
-        metrics_a, total_met_a = build_metrics(best_perm_a, time_mat_a, dist_mat_a, min_sec_a)
-
-        grand_sec_m += min_sec_m
-        grand_met_m += total_met_m
-        grand_sec_a += min_sec_a
-        grand_met_a += total_met_a
-
-        route_data["morning"][zone]   = ordered_m
-        route_data["afternoon"][zone] = ordered_a
-        metrics_data["morning"][zone]   = metrics_m
-        metrics_data["afternoon"][zone] = metrics_a
-
-        # 更新站点顺序（以早上路线为准）
-        for new_seq, idx in enumerate(best_perm_m or [], start=1):
-            zone_stops[idx - 1].sequence = new_seq
-
-    metrics_data["morning"]["grand_total"] = {
-        "total_km": round(grand_met_m / 1000, 2),
-        "total_minutes": round(grand_sec_m / 60, 1),
-    }
-    metrics_data["afternoon"]["grand_total"] = {
-        "total_km": round(grand_met_a / 1000, 2),
-        "total_minutes": round(grand_sec_a / 60, 1),
-    }
+    # 更新站点序号（以早上路线为准）
+    for stop in stops:
+        if stop.id in stop_sequences:
+            stop.sequence = stop_sequences[stop.id]
 
     # 存入数据库
     db.query(models.OptimizedRoute).filter(
